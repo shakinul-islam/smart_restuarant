@@ -15,7 +15,7 @@ class _QRGeneratorScreenState extends State<QRGeneratorScreen> {
 
   // ================= NEW: BASE URL FOR WEB APP =================
   // GitHub এ হোস্ট করার পর আপনার লিংকটি এখানে দেবেন। আপাতত লোকাল টেস্টিং এর জন্য একটি ডেমো লিংক রাখা হলো।
-  final String baseUrl = 'https://shakinul.github.io/foodapp';
+  final String baseUrl = ' https://shakinul-islam.github.io/smart_restuarant/';
 
   String? _qrData;
   int _tableNumber = 1;
