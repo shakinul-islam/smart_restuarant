@@ -102736,7 +102736,7 @@ B.b.L(m,A.b([B.iC,B.bU,B.aaj,B.bc,o,B.bU,A.bf(q,new A.Fg(s,B.h,-1,200,B.a_5,B.a_
 A.aC3.prototype={
 $0(){var s=this.a,r=A.jF(B.d.cr(s.d.a.a),null)
 s.r=r
-s.f="https://shakinul.github.io/foodapp/#/menu?restId="+s.a.c+"&table="+r},
+s.f=" https://shakinul-islam.github.io/smart_restuarant//#/menu?restId="+s.a.c+"&table="+r},
 $S:0}
 A.tP.prototype={
 ab(){var s,r,q="[DEFAULT]",p=$.ae(),o=$.bM,n=(o==null?$.bM=$.dG():o).dE(q)
