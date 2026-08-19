@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "709661603087",
+    "project_id": "contactless-order-a07c0",
+    "storage_bucket": "contactless-order-a07c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709661603087:android:0d4d755fb457269c973a7a",
+        "android_client_info": {
+          "package_name": "com.example.restaurant_ordering_system"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDajpHCq54BR2KWUY3eM-CdFIMu79P0brg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
