@@ -11,6 +11,7 @@ class DatabaseService {
     required int tableNumber,
     required String restaurantId,
     required String paymentMethod,
+    required String customerName, // NEW: Customer Name added
     String? senderNumber,
     String? trxId,
   }) async {
@@ -28,6 +29,7 @@ class DatabaseService {
       await _db.collection('orders').add({
         'restaurant_id': restaurantId,
         'table_no': tableNumber,
+        'customer_name': customerName, // Save specific customer name
         'items': orderItems,
         'total_amount': totalAmount,
         'status': 'Pending',
@@ -59,7 +61,6 @@ class DatabaseService {
         });
   }
 
-  // ================= NEW: Added imageUrls =================
   Future<bool> addMenuItem({
     required String name,
     required String description,
@@ -68,8 +69,8 @@ class DatabaseService {
     required int prepTime,
     required bool isAvailable,
     required String category,
-    required String imageUrl, // Cover Image
-    required List<String> imageUrls, // Multiple Images
+    required String imageUrl,
+    required List<String> imageUrls,
     required String restaurantId,
   }) async {
     try {
@@ -82,7 +83,7 @@ class DatabaseService {
         'prepTime': prepTime,
         'category': category,
         'imageUrl': imageUrl,
-        'imageUrls': imageUrls, // Saving multiple images
+        'imageUrls': imageUrls,
         'isAvailable': isAvailable,
       });
       return true;
@@ -104,11 +105,15 @@ class DatabaseService {
     String orderId,
     String newStatus, {
     int? estimatedTime,
+    String? thankYouMessage,
   }) async {
     try {
       Map<String, dynamic> updateData = {'status': newStatus};
       if (estimatedTime != null) {
         updateData['estimatedTime'] = estimatedTime;
+      }
+      if (thankYouMessage != null) {
+        updateData['thank_you_message'] = thankYouMessage;
       }
       await _db.collection('orders').doc(orderId).update(updateData);
     } catch (e) {
@@ -126,10 +131,7 @@ class DatabaseService {
     }
   }
 
-  Future<bool> updateMenuItem(
-    String docId,
-    Map<String, dynamic> updatedData,
-  ) async {
+  Future<bool> updateMenuItem(String docId, Map<String, dynamic> updatedData) async {
     try {
       await _db.collection('MenuItems').doc(docId).update(updatedData);
       return true;
@@ -149,17 +151,19 @@ class DatabaseService {
     }
   }
 
-  Future<bool> clearTable({
+  // UPDATED: Now clears table specifically for a single CUSTOMER
+  Future<bool> confirmPaymentAndClearTable({
     required String restaurantId,
     required int tableNo,
+    required String customerName,
     required double amountReceived,
-    required String thankYouMessage,
   }) async {
     try {
       QuerySnapshot snapshot = await _db
           .collection('orders')
           .where('restaurant_id', isEqualTo: restaurantId)
           .where('table_no', isEqualTo: tableNo)
+          .where('customer_name', isEqualTo: customerName) // Grouping by Customer
           .where('payment_status', whereIn: ['Unpaid', 'Pending Verification'])
           .get();
 
@@ -168,23 +172,18 @@ class DatabaseService {
         batch.update(doc.reference, {
           'payment_status': 'Paid',
           'amount_received': amountReceived,
-          'thank_you_message': thankYouMessage,
           'cleared_at': FieldValue.serverTimestamp(),
         });
       }
       await batch.commit();
       return true;
     } catch (e) {
-      print('Error clearing table: $e');
+      print('Error confirming payment: $e');
       return false;
     }
   }
 
-  Future<bool> savePaymentSettings(
-    String restaurantId,
-    String bkashNumber,
-    String nagadNumber,
-  ) async {
+  Future<bool> savePaymentSettings(String restaurantId, String bkashNumber, String nagadNumber) async {
     try {
       await _db.collection('restaurant_settings').doc(restaurantId).set({
         'bkash_number': bkashNumber,
@@ -200,15 +199,42 @@ class DatabaseService {
 
   Future<Map<String, dynamic>?> getPaymentSettings(String restaurantId) async {
     try {
-      DocumentSnapshot doc = await _db
-          .collection('restaurant_settings')
-          .doc(restaurantId)
-          .get();
+      DocumentSnapshot doc = await _db.collection('restaurant_settings').doc(restaurantId).get();
       if (doc.exists) return doc.data() as Map<String, dynamic>;
       return null;
     } catch (e) {
       print('Error fetching payment settings: $e');
       return null;
     }
+  }
+
+  Future<List<QueryDocumentSnapshot>> getOrdersForAnalytics(String restaurantId) async {
+    try {
+      QuerySnapshot snapshot = await _db
+          .collection('orders')
+          .where('restaurant_id', isEqualTo: restaurantId)
+          .where('payment_status', isEqualTo: 'Paid')
+          .get();
+      return snapshot.docs;
+    } catch (e) {
+      print('Error fetching analytics: $e');
+      return [];
+    }
+  }
+
+  Stream<QuerySnapshot> getActiveTableOrders(String restaurantId) {
+    return _db
+        .collection('orders')
+        .where('restaurant_id', isEqualTo: restaurantId)
+        .where('payment_status', whereIn: ['Unpaid', 'Pending Verification'])
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getKitchenOrders(String restaurantId) {
+    return _db
+        .collection('orders')
+        .where('restaurant_id', isEqualTo: restaurantId)
+        .where('status', whereIn: ['Pending', 'Cooking'])
+        .snapshots();
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For Clipboard (Copy/Paste)
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/cart_provider.dart';
 import '../services/database_service.dart';
@@ -23,12 +23,12 @@ class _CartScreenState extends State<CartScreen> {
   bool _isLoadingSettings = true;
   final DatabaseService _dbService = DatabaseService();
 
-  // Payment Variables
-  String _paymentMethod = 'Cash'; // Default Payment Method
+  String _paymentMethod = 'Cash';
+  final TextEditingController _nameController =
+      TextEditingController(); // NEW: Customer Name
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _trxIdController = TextEditingController();
 
-  // Dynamic Restaurant Numbers
   String _bkashNumber = 'Not set';
   String _nagadNumber = 'Not set';
 
@@ -51,14 +51,13 @@ class _CartScreenState extends State<CartScreen> {
         _isLoadingSettings = false;
       });
     } else {
-      if (mounted) {
-        setState(() => _isLoadingSettings = false);
-      }
+      if (mounted) setState(() => _isLoadingSettings = false);
     }
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _phoneController.dispose();
     _trxIdController.dispose();
     super.dispose();
@@ -67,22 +66,29 @@ class _CartScreenState extends State<CartScreen> {
   void _placeOrder(CartProvider cart) async {
     if (cart.items.isEmpty) return;
 
-    // Validation for Digital Payment
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your Name!'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_paymentMethod != 'Cash') {
       if ((_paymentMethod == 'bKash' && _bkashNumber == 'Not set') ||
           (_paymentMethod == 'Nagad' && _nagadNumber == 'Not set')) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Sorry, $_paymentMethod is currently unavailable for this restaurant.',
-            ),
+            content: Text('Sorry, $_paymentMethod is currently unavailable.'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
         );
         return;
       }
-
       if (_phoneController.text.trim().isEmpty ||
           _trxIdController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -96,9 +102,7 @@ class _CartScreenState extends State<CartScreen> {
       }
     }
 
-    setState(() {
-      _isOrdering = true;
-    });
+    setState(() => _isOrdering = true);
 
     final bool success = await _dbService.placeOrder(
       cartItems: cart.items.values.toList(),
@@ -106,15 +110,14 @@ class _CartScreenState extends State<CartScreen> {
       tableNumber: widget.tableNumber,
       restaurantId: widget.restaurantId,
       paymentMethod: _paymentMethod,
+      customerName: _nameController.text.trim(), // Sent to DB
       senderNumber: _paymentMethod != 'Cash'
           ? _phoneController.text.trim()
           : null,
       trxId: _paymentMethod != 'Cash' ? _trxIdController.text.trim() : null,
     );
 
-    setState(() {
-      _isOrdering = false;
-    });
+    setState(() => _isOrdering = false);
 
     if (success) {
       if (!mounted) return;
@@ -123,7 +126,7 @@ class _CartScreenState extends State<CartScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to place order. Please try again!'),
+          content: Text('Failed to place order. Try again!'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -259,16 +262,14 @@ class _CartScreenState extends State<CartScreen> {
     final cart = Provider.of<CartProvider>(context);
     final cartItems = cart.items.values.toList();
     final cartKeys = cart.items.keys.toList();
-
     double subtotal = 0.0;
     for (var item in cartItems) {
       subtotal += item.menuItem.price * item.quantity;
     }
     double totalSavings = subtotal - cart.totalAmount;
 
-    // Original Brand Colors
-    const Color bkashColor = Color(0xFFE2136E); // bKash Pink
-    const Color nagadColor = Color(0xFFF37021); // Nagad Orange
+    const Color bkashColor = Color(0xFFE2136E);
+    const Color nagadColor = Color(0xFFF37021);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -315,7 +316,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Looks like you haven\'t added\nanything to your cart yet.',
+                    "Looks like you haven't added\nanything to your cart yet.",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15, color: Colors.grey),
                   ),
@@ -354,8 +355,6 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // Cart Items List
                         ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -392,17 +391,6 @@ class _CartScreenState extends State<CartScreen> {
                                       width: 70,
                                       height: 70,
                                       fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              Container(
-                                                width: 70,
-                                                height: 70,
-                                                color: Colors.grey[200],
-                                                child: const Icon(
-                                                  Icons.broken_image,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -424,7 +412,7 @@ class _CartScreenState extends State<CartScreen> {
                                         Row(
                                           children: [
                                             Text(
-                                              '\$${effectivePrice.toStringAsFixed(2)}',
+                                              '৳${effectivePrice.toStringAsFixed(2)}',
                                               style: const TextStyle(
                                                 color: Colors.deepOrange,
                                                 fontWeight: FontWeight.bold,
@@ -435,7 +423,7 @@ class _CartScreenState extends State<CartScreen> {
                                                 0) ...[
                                               const SizedBox(width: 6),
                                               Text(
-                                                '\$${item.menuItem.price.toStringAsFixed(2)}',
+                                                '৳${item.menuItem.price.toStringAsFixed(2)}',
                                                 style: const TextStyle(
                                                   color: Colors.grey,
                                                   fontSize: 12,
@@ -523,10 +511,36 @@ class _CartScreenState extends State<CartScreen> {
                             );
                           },
                         ),
-
                         const SizedBox(height: 20),
 
-                        // ================= PAYMENT METHOD SECTION =================
+                        // ================= NEW: CUSTOMER NAME =================
+                        const Text(
+                          'Your Name',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter your name (e.g. Shakinul)',
+                            prefixIcon: const Icon(
+                              Icons.person,
+                              color: Colors.deepOrange,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Payment Methods
                         const Text(
                           'Payment Method',
                           style: TextStyle(
@@ -535,14 +549,10 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
                         if (_isLoadingSettings)
                           const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(10.0),
-                              child: CircularProgressIndicator(
-                                color: Colors.deepOrange,
-                              ),
+                            child: CircularProgressIndicator(
+                              color: Colors.deepOrange,
                             ),
                           )
                         else ...[
@@ -570,12 +580,8 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                             ],
                           ),
-
-                          // Show Dynamic Input Fields if Digital Payment is selected
                           if (_paymentMethod != 'Cash') ...[
                             const SizedBox(height: 16),
-
-                            // ================= NEW: WARNING MESSAGE =================
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -610,7 +616,6 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -652,14 +657,12 @@ class _CartScreenState extends State<CartScreen> {
                                               : nagadColor,
                                         ),
                                       ),
-
-                                      // ================= NEW: COPY NUMBER ICON =================
                                       IconButton(
                                         icon: const Icon(Icons.copy, size: 20),
                                         color: _paymentMethod == 'bKash'
                                             ? bkashColor
                                             : nagadColor,
-                                        onPressed: () {
+                                        onPressed: () async {
                                           String numToCopy =
                                               _paymentMethod == 'bKash'
                                               ? _bkashNumber
@@ -683,65 +686,56 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  TextField(
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                    decoration: InputDecoration(
-                                      labelText: 'Your $_paymentMethod Number',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      prefixIcon: const Icon(
-                                        Icons.phone_android,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  TextField(
-                                    controller: _trxIdController,
-                                    decoration: InputDecoration(
-                                      labelText: 'Transaction ID (TrxID)',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      prefixIcon: const Icon(Icons.tag),
-
-                                      // ================= NEW: PASTE TRXID ICON =================
-                                      suffixIcon: IconButton(
-                                        icon: const Icon(Icons.content_paste),
-                                        color: Colors.grey,
-                                        onPressed: () async {
-                                          ClipboardData? data =
-                                              await Clipboard.getData(
-                                                Clipboard.kTextPlain,
-                                              );
-                                          if (data != null &&
-                                              data.text != null) {
-                                            setState(() {
-                                              _trxIdController.text =
-                                                  data.text!;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
                                 ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                labelText: 'Your $_paymentMethod Number',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.phone_android),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _trxIdController,
+                              decoration: InputDecoration(
+                                labelText: 'Transaction ID (TrxID)',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: const Icon(Icons.tag),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.content_paste),
+                                  color: Colors.grey,
+                                  onPressed: () async {
+                                    ClipboardData? data =
+                                        await Clipboard.getData(
+                                          Clipboard.kTextPlain,
+                                        );
+                                    if (data != null && data.text != null)
+                                      setState(
+                                        () =>
+                                            _trxIdController.text = data.text!,
+                                      );
+                                  },
+                                ),
                               ),
                             ),
                           ],
                         ],
-
                         const SizedBox(height: 24),
-
-                        // Order Summary (Bill Details)
                         const Text(
                           'Order Summary',
                           style: TextStyle(
@@ -777,7 +771,7 @@ class _CartScreenState extends State<CartScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '\$${subtotal.toStringAsFixed(2)}',
+                                    '৳${subtotal.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -800,7 +794,7 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '-\$${totalSavings.toStringAsFixed(2)}',
+                                      '-৳${totalSavings.toStringAsFixed(2)}',
                                       style: const TextStyle(
                                         color: Colors.green,
                                         fontWeight: FontWeight.bold,
@@ -826,7 +820,7 @@ class _CartScreenState extends State<CartScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '\$${cart.totalAmount.toStringAsFixed(2)}',
+                                    '৳${cart.totalAmount.toStringAsFixed(2)}',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
@@ -879,7 +873,7 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                             ),
                             Text(
-                              '\$${cart.totalAmount.toStringAsFixed(2)}',
+                              '৳${cart.totalAmount.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 22,
                                 color: Colors.black87,

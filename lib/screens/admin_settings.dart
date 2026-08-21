@@ -4,7 +4,10 @@ import '../services/auth_service.dart';
 import 'qr_generator_screen.dart';
 import 'login_screen.dart';
 import 'menu_screen.dart';
-import 'waiter_screen.dart'; // ওয়েটার স্ক্রিনে যাওয়ার জন্য
+import 'waiter_screen.dart';
+import 'admin_sales_dashboard.dart';
+import 'live_table_grid.dart';
+import 'kitchen_display_screen.dart'; // NEW KDS IMPORT
 
 class AdminSettingsTab extends StatefulWidget {
   final String restaurantId;
@@ -154,9 +157,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
       widget.restaurantId,
     );
 
-    if (mounted) {
-      Navigator.pop(context);
-    }
+    if (mounted) Navigator.pop(context);
 
     final TextEditingController bkashCtrl = TextEditingController(
       text: currentSettings?['bkash_number'] ?? '',
@@ -241,7 +242,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                             nagadCtrl.text.trim(),
                           );
                           setDialogState(() => isSaving = false);
-
                           if (success) {
                             Navigator.pop(context);
                             _showMessage(
@@ -277,7 +277,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 
-  // ===================== LOGOUT LOGIC =====================
   void _confirmLogout() {
     showDialog(
       context: context,
@@ -331,7 +330,136 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 20),
 
-        // --- 1. View as Customer ---
+        // --- NEW: Kitchen Display System (KDS) ---
+        Card(
+          elevation: 2,
+          shadowColor: Colors.black12,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.brown.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.soup_kitchen, color: Colors.brown),
+            ),
+            title: const Text(
+              'Kitchen Display (KDS)',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: const Text('Live order screen for chefs'),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      KitchenDisplayScreen(restaurantId: widget.restaurantId),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        Card(
+          elevation: 2,
+          shadowColor: Colors.black12,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.indigo.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.bar_chart_rounded, color: Colors.indigo),
+            ),
+            title: const Text(
+              'Sales Dashboard & Analytics',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: const Text('View revenue, top items & reports'),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AdminSalesDashboard(restaurantId: widget.restaurantId),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        Card(
+          elevation: 2,
+          shadowColor: Colors.black12,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.grid_view_rounded,
+                color: Colors.redAccent,
+              ),
+            ),
+            title: const Text(
+              'Live Table Grid',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: const Text('Monitor active tables & unpaid bills'),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      LiveTableGridScreen(restaurantId: widget.restaurantId),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -376,7 +504,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 12),
 
-        // --- 2. Access Waiter Dashboard (NEW) ---
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -419,7 +546,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 12),
 
-        // --- 3. Add Staff / Waiter ---
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -457,7 +583,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 12),
 
-        // --- 4. Generate QR Code ---
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -500,7 +625,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 12),
 
-        // --- 5. Payment Settings ---
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -535,7 +659,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 40),
 
-        // --- Logout Button ---
         SizedBox(
           height: 55,
           child: ElevatedButton.icon(
