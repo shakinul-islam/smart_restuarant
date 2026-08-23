@@ -2,6 +2,7 @@
 <html>
 <head>
   <base href="/smart_restuarant/">
+
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A modern digital menu and POS system.">
@@ -13,36 +14,119 @@
   <title>Digital Menu</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- ================= FIX: UPDATED PRE-LOADER CSS ================= -->
   <style>
-    body { background-color: #FAFAFA; margin: 0; padding: 0; overflow: hidden; }
-    #loading-box { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #FAFAFA; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    .food-loader { position: relative; display: flex; flex-direction: column; align-items: center; width: 100px; height: 80px; }
-    .steam { position: absolute; width: 6px; height: 25px; background: #FF5722; border-radius: 10px; bottom: 45px; opacity: 0; animation: steam-rise 1.5s ease-out infinite; }
+    body {
+      background-color: #FAFAFA;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    /* অ্যানিমেশনটিকে একটি ফিক্সড ফুল-স্ক্রিন বক্সের ভেতর রাখা হলো */
+    #loading-box {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    .food-loader {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100px;
+      height: 80px;
+    }
+
+    .steam {
+      position: absolute;
+      width: 6px;
+      height: 25px;
+      background: #FF5722;
+      border-radius: 10px;
+      bottom: 45px;
+      opacity: 0;
+      animation: steam-rise 1.5s ease-out infinite;
+    }
+    
     .steam1 { left: 30px; animation-delay: 0s; }
     .steam2 { left: 47px; animation-delay: 0.3s; }
     .steam3 { left: 64px; animation-delay: 0.6s; }
-    .bowl { width: 80px; height: 40px; background: #FF5722; border-radius: 5px 5px 40px 40px; margin-top: 30px; position: relative; z-index: 2; }
-    .plate { width: 100px; height: 8px; background: #FFAB91; border-radius: 10px; margin-top: 5px; }
-    @keyframes steam-rise { 0% { transform: translateY(10px) scaleX(1) scaleY(0.5); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-30px) scaleX(1.5) scaleY(1.2); opacity: 0; } }
-    .loading-text { margin-top: 25px; color: #FF5722; font-size: 18px; font-weight: 700; letter-spacing: 1px; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { opacity: 0.6; transform: scale(0.98); } 50% { opacity: 1; transform: scale(1.02); } 100% { opacity: 0.6; transform: scale(0.98); } }
+
+    .bowl {
+      width: 80px;
+      height: 40px;
+      background: #FF5722;
+      border-radius: 5px 5px 40px 40px;
+      margin-top: 30px; 
+      position: relative;
+      z-index: 2;
+    }
+
+    .plate {
+      width: 100px;
+      height: 8px;
+      background: #FFAB91;
+      border-radius: 10px;
+      margin-top: 5px;
+    }
+
+    @keyframes steam-rise {
+      0% { transform: translateY(10px) scaleX(1) scaleY(0.5); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-30px) scaleX(1.5) scaleY(1.2); opacity: 0; }
+    }
+
+    .loading-text {
+      margin-top: 25px;
+      color: #FF5722;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
+      100% { opacity: 0.6; transform: scale(0.98); }
+    }
   </style>
 </head>
 <body>
+  
+  <!-- ================= FIX: LOADING BOX ================= -->
   <div id="loading-box">
     <div class="food-loader">
-      <div class="steam steam1"></div><div class="steam steam2"></div><div class="steam steam3"></div>
-      <div class="bowl"></div><div class="plate"></div>
+      <div class="steam steam1"></div>
+      <div class="steam steam2"></div>
+      <div class="steam steam3"></div>
+      <div class="bowl"></div>
+      <div class="plate"></div>
     </div>
     <div class="loading-text">Cooking up the menu...</div>
   </div>
 
   <script>
+    // ফ্লাটার লোড হওয়ার পর লোডিং বক্সটি অটোমেটিক গায়েব করে দেবে
     window.addEventListener('flutter-first-frame', function() {
       var loader = document.getElementById('loading-box');
-      if (loader) { loader.style.display = 'none'; }
+      if (loader) {
+        loader.style.display = 'none';
+      }
     });
   </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

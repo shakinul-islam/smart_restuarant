@@ -1086,9 +1086,9 @@ class _MenuScreenState extends State<MenuScreen> {
                                                           int itemQuantity =
                                                               isInCart
                                                               ? cart
-                                                                    .items[item
-                                                                        .id]!
-                                                                    .quantity
+                                                                  .items[item
+                                                                      .id]!
+                                                                  .quantity
                                                               : 0;
 
                                                           return isInCart
@@ -1233,10 +1233,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/menu_item.dart';
 import '../services/cart_provider.dart';
 import '../services/database_service.dart';
-import 'cart_screen.dart';
+import 'cart_screen.dart'; // REQUIRED FOR CustomerSession
 import 'order_tracking_screen.dart';
 import 'customer_food_details.dart';
 
@@ -1263,17 +1264,17 @@ class _MenuScreenState extends State<MenuScreen> {
   String _searchQuery = '';
   String _selectedSort = 'default';
   String _selectedCategoryFilter = 'All';
+  String _savedCustomerName = '';
 
   Timer? _sliderTimer;
   final PageController _pageController = PageController(viewportFraction: 0.9);
-
-  // ================= FIXED: Replaced GlobalKeys with simple ScrollController =================
   final ScrollController _mainScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _menuStream = _dbService.getMenuItems(widget.restaurantId);
+    _loadCustomerName();
 
     _sliderTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_pageController.hasClients) {
@@ -1287,6 +1288,25 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
+  // ================= FIXED: SAFE SESSION LOAD =================
+  Future<void> _loadCustomerName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? savedName = prefs.getString('customer_name');
+      if (savedName != null && savedName.isNotEmpty) {
+        CustomerSession.name = savedName;
+      }
+    } catch (e) {
+      print("SharedPreferences disabled by mobile browser: $e");
+    }
+
+    if (mounted) {
+      setState(() {
+        _savedCustomerName = CustomerSession.name;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _sliderTimer?.cancel();
@@ -1296,7 +1316,6 @@ class _MenuScreenState extends State<MenuScreen> {
     super.dispose();
   }
 
-  // ================= FIXED: Simple Scroll Logic that doesn't crash on Web =================
   void _scrollToCategory(String category) {
     setState(() {
       _selectedCategoryFilter = category;
@@ -1304,7 +1323,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
     if (_mainScrollController.hasClients) {
       _mainScrollController.animateTo(
-        category == 'All' ? 0.0 : 350.0, // Scrolls down past the cover image
+        category == 'All' ? 0.0 : 350.0,
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
@@ -1530,8 +1549,8 @@ class _MenuScreenState extends State<MenuScreen> {
             ? Center(
                 key: const ValueKey('cart_bar'),
                 child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => CartScreen(
@@ -1540,6 +1559,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         ),
                       ),
                     );
+                    _loadCustomerName(); // Refresh session name when back
                   },
                   child: Container(
                     height: 55,
@@ -1688,7 +1708,6 @@ class _MenuScreenState extends State<MenuScreen> {
                 }
               }
 
-              // ================= FIXED: Replaced Slivers with standard ListView to prevent Web crashes =================
               return CustomScrollView(
                 controller: _mainScrollController,
                 slivers: [
@@ -1721,7 +1740,6 @@ class _MenuScreenState extends State<MenuScreen> {
                           String coverImageUrl =
                               'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
                           double alignY = 0.0;
-
                           if (snapshot.hasData && snapshot.data!.exists) {
                             final data =
                                 snapshot.data!.data() as Map<String, dynamic>?;
@@ -1735,7 +1753,6 @@ class _MenuScreenState extends State<MenuScreen> {
                               }
                             }
                           }
-
                           return Stack(
                             fit: StackFit.expand,
                             children: [
@@ -1770,7 +1787,15 @@ class _MenuScreenState extends State<MenuScreen> {
                             final allOrders = snapshot.data!.docs;
                             activeOrderCount = allOrders.where((doc) {
                               final data = doc.data() as Map<String, dynamic>;
+                              final cName = data['customer_name'] ?? 'Guest';
+
+                              bool nameMatches =
+                                  _savedCustomerName.isEmpty ||
+                                  cName.toString().trim().toLowerCase() ==
+                                      _savedCustomerName.trim().toLowerCase();
+
                               return data['table_no'] == widget.tableNumber &&
+                                  nameMatches &&
                                   (data['payment_status'] == 'Unpaid' ||
                                       data['payment_status'] ==
                                           'Pending Verification') &&
@@ -1816,62 +1841,6 @@ class _MenuScreenState extends State<MenuScreen> {
                                     child: Center(
                                       child: Text(
                                         '$activeOrderCount',
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.deepOrange,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                      ),
-                      Consumer<CartProvider>(
-                        builder: (context, cart, child) {
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.shopping_bag_outlined,
-                                  size: 28,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CartScreen(
-                                        restaurantId: widget.restaurantId,
-                                        tableNumber: widget.tableNumber,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              if (cart.itemCount > 0)
-                                Positioned(
-                                  right: 6,
-                                  top: 6,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.deepOrange,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 20,
-                                      minHeight: 20,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${cart.itemCount}',
                                         style: const TextStyle(
                                           fontSize: 10,
                                           color: Colors.deepOrange,
@@ -2467,7 +2436,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                   ),
                                 ),
                               );
-                            }).toList(),
+                            }),
                           ],
                         );
                       }, childCount: categorizedItems.keys.length),
@@ -2479,7 +2448,6 @@ class _MenuScreenState extends State<MenuScreen> {
               );
             },
           ),
-
           Consumer<CartProvider>(
             builder: (context, cart, child) {
               return _buildFloatingCartBar(cart);
