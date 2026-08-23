@@ -2,7 +2,6 @@
 <html>
 <head>
   <base href="$FLUTTER_BASE_HREF">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A modern digital menu and POS system.">
@@ -14,7 +13,7 @@
   <title>Digital Menu</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- ================= FIX: UPDATED PRE-LOADER CSS ================= -->
+  <!-- ================= PRE-LOADER CSS ================= -->
   <style>
     body {
       background-color: #FAFAFA;
@@ -23,7 +22,6 @@
       overflow: hidden;
     }
     
-    /* অ্যানিমেশনটিকে একটি ফিক্সড ফুল-স্ক্রিন বক্সের ভেতর রাখা হলো */
     #loading-box {
       position: absolute;
       top: 0;
@@ -105,7 +103,6 @@
 </head>
 <body>
   
-  <!-- ================= FIX: LOADING BOX ================= -->
   <div id="loading-box">
     <div class="food-loader">
       <div class="steam steam1"></div>
@@ -118,11 +115,33 @@
   </div>
 
   <script>
-    // ফ্লাটার লোড হওয়ার পর লোডিং বক্সটি অটোমেটিক গায়েব করে দেবে
+    // 1. ফ্লাটার লোড হওয়ার পর লোডিং বক্সটি অটোমেটিক গায়েব করে দেবে
     window.addEventListener('flutter-first-frame', function() {
       var loader = document.getElementById('loading-box');
       if (loader) {
         loader.style.display = 'none';
+      }
+    });
+
+    // ================= GOD MODE: ANTI-FREEZE HACK =================
+    // লজিক: ইউজার ব্রাউজার থেকে বের হয়ে গেলেই ফ্লাটার ইঞ্জিনটাকে কিল (Kill) করে দেওয়া হবে।
+    // ফলে ব্রাউজার হ্যাং হতে পারবে না। আর ফিরে আসলেই ফ্রেশ রিলোড হবে।
+    
+    let isAppPaused = false;
+
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === 'hidden') {
+        // ইউজার ব্রাউজার থেকে বের হয়ে গেছে। সাথে সাথে পেজটি ফ্রিজ ঠেকাতে আমরা 
+        // ফ্লাটার ইঞ্জিন ক্র্যাশ করার আগেই একটি ফ্ল্যাগ সেট করে রাখবো।
+        isAppPaused = true;
+      } else if (document.visibilityState === 'visible') {
+        // ইউজার ব্রাউজারে ফিরে এসেছে।
+        if (isAppPaused) {
+          // যেহেতু সে আগে বের হয়ে গিয়েছিল, তাই ফিরে আসার সাথে সাথে 
+          // হ্যাং হওয়া ঠেকানোর জন্য পেজটিকে হার্ড রিলোড (Hard Reload) দিয়ে ফ্রেশ করে দেবো।
+          console.log("Welcome back! Reloading app to prevent freeze...");
+          window.location.href = window.location.href; 
+        }
       }
     });
   </script>
