@@ -2,7 +2,6 @@
 <html>
 <head>
   <base href="/smart_restuarant/">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A modern digital menu and POS system.">
@@ -14,7 +13,7 @@
   <title>Digital Menu</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- ================= FIX: UPDATED PRE-LOADER CSS ================= -->
+  <!-- ================= PRE-LOADER CSS ================= -->
   <style>
     body {
       background-color: #FAFAFA;
@@ -23,7 +22,6 @@
       overflow: hidden;
     }
     
-    /* অ্যানিমেশনটিকে একটি ফিক্সড ফুল-স্ক্রিন বক্সের ভেতর রাখা হলো */
     #loading-box {
       position: absolute;
       top: 0;
@@ -105,7 +103,7 @@
 </head>
 <body>
   
-  <!-- ================= FIX: LOADING BOX ================= -->
+  <!-- ================= LOADING BOX ================= -->
   <div id="loading-box">
     <div class="food-loader">
       <div class="steam steam1"></div>
@@ -123,6 +121,31 @@
       var loader = document.getElementById('loading-box');
       if (loader) {
         loader.style.display = 'none';
+      }
+    });
+
+    // ================= GOD MODE: ANTI-BLANK SCREEN LOGIC =================
+    
+    // 1. WebGL ক্র্যাশ করলে সাথে সাথে পেজ রিলোড করবে
+    window.addEventListener('webglcontextlost', function (e) {
+      e.preventDefault();
+      console.log("Flutter CanvasKit crashed. Reloading...");
+      window.location.reload();
+    }, false);
+
+    // 2. ইউজার ২০ সেকেন্ডের বেশি অন্য অ্যাপে থাকলে ফিরে আসার সাথে সাথে সাইলেন্ট রিলোড
+    let pauseTime;
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === 'hidden') {
+        pauseTime = new Date().getTime(); // বের হওয়ার সময় নোট করে রাখলো
+      } else {
+        if (pauseTime) {
+          let timeAway = new Date().getTime() - pauseTime;
+          if (timeAway > 20000) { // ২০ সেকেন্ড (20000 ms)
+            console.log("User was away too long. Forcing reload to prevent blank screen.");
+            window.location.reload();
+          }
+        }
       }
     });
   </script>
