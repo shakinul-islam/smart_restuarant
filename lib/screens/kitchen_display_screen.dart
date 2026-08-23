@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
+import 'login_screen.dart';
 
 class KitchenDisplayScreen extends StatefulWidget {
   final String restaurantId;
@@ -13,6 +15,7 @@ class KitchenDisplayScreen extends StatefulWidget {
 
 class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
   final DatabaseService _dbService = DatabaseService();
+  final AuthService _authService = AuthService(); // NEW: Needed for logout
   late Timer _timer;
 
   @override
@@ -27,6 +30,47 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+
+  // ================= KITCHEN LOGOUT LOGIC =================
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text(
+          'Logout',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.brown),
+        ),
+        content: const Text(
+          'Are you sure you want to log out of Kitchen Display?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.brown[800],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _authService.logout();
+              if (!mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   String _getTimeAgo(Timestamp? timestamp) {
@@ -117,7 +161,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
             Icon(Icons.soup_kitchen, size: 28),
             SizedBox(width: 8),
             Text(
-              'Kitchen Display System (KDS)',
+              'Kitchen Display System',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -125,6 +169,13 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
         backgroundColor: Colors.brown[800],
         foregroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _confirmLogout,
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _dbService.getKitchenOrders(widget.restaurantId),
@@ -182,8 +233,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
               final doc = orders[index];
               final data = doc.data() as Map<String, dynamic>;
               final tableNo = data['table_no'] ?? 0;
-              final customerName =
-                  data['customer_name'] ?? 'Guest'; // NEW: Added Customer Name
+              final customerName = data['customer_name'] ?? 'Guest';
               final status = data['status'] ?? 'Pending';
               final timestamp = data['created_at'] as Timestamp?;
               final items = List<dynamic>.from(data['items'] ?? []);
@@ -226,7 +276,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'T$tableNo - $customerName', // UPDATED UI
+                              'T$tableNo - $customerName',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

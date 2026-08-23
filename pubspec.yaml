@@ -43,6 +43,7 @@ dependencies:
   qr_flutter: ^4.1.0
   firebase_auth: ^6.5.7
   intl: ^0.20.3
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

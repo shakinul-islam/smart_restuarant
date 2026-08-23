@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'admin_screen.dart';
 import 'waiter_screen.dart';
+import 'kitchen_display_screen.dart'; // IMPORT KITCHEN SCREEN
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -18,12 +19,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final AuthService _authService = AuthService();
   bool _isLoading = false;
-  bool _isCheckingSession = true; // Auto-Login চেক করার জন্য
+  bool _isCheckingSession = true;
 
   @override
   void initState() {
     super.initState();
-    _checkSession(); // অ্যাপ ওপেন হলেই সেশন চেক করবে
+    _checkSession();
   }
 
   // ================= Auto-Login Logic =================
@@ -31,7 +32,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final userData = await _authService.getCurrentStaffData();
 
     if (userData != null && mounted) {
-      // ইউজার আগে থেকেই লগ-ইন করা আছে
       String role = userData['role'] ?? 'unknown';
       String restaurantId = userData['restaurant_id'] ?? 'unknown';
 
@@ -49,13 +49,20 @@ class _LoginScreenState extends State<LoginScreen> {
             builder: (context) => WaiterScreen(restaurantId: restaurantId),
           ),
         );
+      } else if (role == 'kitchen') {
+        // NEW: KITCHEN ROLE REDIRECTION
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                KitchenDisplayScreen(restaurantId: restaurantId),
+          ),
+        );
       } else {
-        // রোল না মিললে লগ-আউট করে ফর্ম দেখাবে
         await _authService.logout();
         setState(() => _isCheckingSession = false);
       }
     } else {
-      // ইউজার লগ-ইন করা নেই, ফর্ম দেখাবে
       if (mounted) {
         setState(() => _isCheckingSession = false);
       }
@@ -93,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      // ইউজারের রোল (Role) চেক করে নির্দিষ্ট স্ক্রিনে পাঠানো হচ্ছে
       if (role == 'admin') {
         Navigator.pushReplacement(
           context,
@@ -106,6 +112,15 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => WaiterScreen(restaurantId: restaurantId),
+          ),
+        );
+      } else if (role == 'kitchen') {
+        // NEW: KITCHEN ROLE REDIRECTION
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                KitchenDisplayScreen(restaurantId: restaurantId),
           ),
         );
       } else {
@@ -138,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // সেশন চেক করার সময় সুন্দর একটি লোডিং স্ক্রিন দেখাবে
     if (_isCheckingSession) {
       return const Scaffold(
         backgroundColor: Colors.indigo,
@@ -222,7 +236,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Email Field
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -244,7 +257,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Field
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
@@ -266,7 +278,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Login Button
                   SizedBox(
                     width: double.infinity,
                     height: 55,
@@ -300,7 +311,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Register Button
                   TextButton(
                     onPressed: () {
                       Navigator.push(

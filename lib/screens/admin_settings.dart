@@ -7,7 +7,7 @@ import 'menu_screen.dart';
 import 'waiter_screen.dart';
 import 'admin_sales_dashboard.dart';
 import 'live_table_grid.dart';
-import 'kitchen_display_screen.dart'; // NEW KDS IMPORT
+import 'kitchen_display_screen.dart';
 
 class AdminSettingsTab extends StatefulWidget {
   final String restaurantId;
@@ -29,12 +29,13 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
-  // ===================== WAITER LOGIC =====================
-  void _showAddWaiterDialog() {
+  // ===================== ADD STAFF LOGIC (Waiter & Kitchen) =====================
+  void _showAddStaffDialog() {
     final TextEditingController emailCtrl = TextEditingController();
     final TextEditingController passCtrl = TextEditingController();
-    final waiterFormKey = GlobalKey<FormState>();
+    final staffFormKey = GlobalKey<FormState>();
     bool isAdding = false;
+    String selectedRole = 'waiter'; // Default role
 
     showDialog(
       context: context,
@@ -47,22 +48,48 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                 borderRadius: BorderRadius.circular(15),
               ),
               title: const Text(
-                'Add New Waiter',
+                'Add New Staff',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
                 ),
               ),
               content: Form(
-                key: waiterFormKey,
+                key: staffFormKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    DropdownButtonFormField<String>(
+                      value: selectedRole,
+                      decoration: InputDecoration(
+                        labelText: 'Select Staff Role',
+                        prefixIcon: const Icon(
+                          Icons.admin_panel_settings,
+                          color: Colors.deepPurple,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'waiter',
+                          child: Text('Waiter'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'kitchen',
+                          child: Text('Kitchen (Chef)'),
+                        ),
+                      ],
+                      onChanged: (val) =>
+                          setDialogState(() => selectedRole = val!),
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: emailCtrl,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        labelText: 'Waiter Email',
+                        labelText: 'Staff Email',
                         prefixIcon: Icon(Icons.email),
                       ),
                       validator: (v) => v!.isEmpty ? 'Enter email' : null,
@@ -100,23 +127,24 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                   onPressed: isAdding
                       ? null
                       : () async {
-                          if (!waiterFormKey.currentState!.validate()) return;
+                          if (!staffFormKey.currentState!.validate()) return;
                           setDialogState(() => isAdding = true);
-                          bool success = await _authService.createWaiterAccount(
+                          bool success = await _authService.createStaffAccount(
                             email: emailCtrl.text.trim(),
                             password: passCtrl.text.trim(),
                             restaurantId: widget.restaurantId,
+                            role: selectedRole,
                           );
                           setDialogState(() => isAdding = false);
                           if (success) {
                             Navigator.pop(context);
                             _showMessage(
-                              'Waiter account created successfully!',
+                              '${selectedRole.toUpperCase()} account created successfully!',
                               Colors.green,
                             );
                           } else {
                             _showMessage(
-                              'Failed to add waiter. Try a different email.',
+                              'Failed to add staff. Try a different email.',
                               Colors.red,
                             );
                           }
@@ -131,7 +159,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                           ),
                         )
                       : const Text(
-                          'Add Waiter',
+                          'Create Account',
                           style: TextStyle(color: Colors.white),
                         ),
                 ),
@@ -156,7 +184,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     final currentSettings = await _dbService.getPaymentSettings(
       widget.restaurantId,
     );
-
     if (mounted) Navigator.pop(context);
 
     final TextEditingController bkashCtrl = TextEditingController(
@@ -330,7 +357,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
         ),
         const SizedBox(height: 20),
 
-        // --- NEW: Kitchen Display System (KDS) ---
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -351,7 +377,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               child: const Icon(Icons.soup_kitchen, color: Colors.brown),
             ),
             title: const Text(
-              'Kitchen Display (KDS)',
+              'Kitchen Display',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             subtitle: const Text('Live order screen for chefs'),
@@ -438,7 +464,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               ),
             ),
             title: const Text(
-              'Live Table Grid',
+              'Live Table View',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             subtitle: const Text('Monitor active tables & unpaid bills'),
@@ -527,7 +553,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               'Access Waiter Dashboard',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            subtitle: const Text('Manage live orders & receive payments'),
+            subtitle: const Text('Manage live orders & send food'),
             trailing: const Icon(
               Icons.arrow_forward_ios,
               size: 16,
@@ -569,16 +595,17 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               ),
             ),
             title: const Text(
-              'Add Staff / Waiter',
+              'Add Staff Account',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            subtitle: const Text('Create account for your waiters'),
+            subtitle: const Text('Create accounts for Waiter & Kitchen'),
             trailing: const Icon(
               Icons.arrow_forward_ios,
               size: 16,
               color: Colors.grey,
             ),
-            onTap: _showAddWaiterDialog,
+            onTap:
+                _showAddStaffDialog, // UPDATED: Calls the new dropdown dialog
           ),
         ),
         const SizedBox(height: 12),

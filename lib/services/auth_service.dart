@@ -6,7 +6,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // 1. Login Function (For both Admin & Waiter)
+  // 1. Login Function (For Admin, Waiter & Kitchen)
   Future<Map<String, dynamic>?> loginUser(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
@@ -44,7 +44,6 @@ class AuthService {
   }
 
   // 2. Session Checker (Auto-Login Support)
-  // অ্যাপ ওপেন করার সময় ইউজার আগে থেকেই লগ-ইন করা আছে কি না, তা চেক করার জন্য
   Future<Map<String, dynamic>?> getCurrentStaffData() async {
     try {
       User? currentUser = _auth.currentUser;
@@ -83,7 +82,7 @@ class AuthService {
           .substring(0, 4)
           .toLowerCase();
 
-      // Generating a unique Restaurant ID (Multi-tenant Architecture)
+      // Generating a unique Restaurant ID
       String restaurantId = '${baseName}_$uniqueSuffix';
 
       Map<String, dynamic> userData = {
@@ -91,7 +90,7 @@ class AuthService {
         'email': email,
         'restaurant_name': restaurantName,
         'restaurant_id': restaurantId,
-        'role': 'admin', // Strict Role Assignment
+        'role': 'admin',
         'created_at': FieldValue.serverTimestamp(),
       };
 
@@ -103,18 +102,18 @@ class AuthService {
     }
   }
 
-  // 4. Create Waiter Account (For Admins to add staff)
-  Future<bool> createWaiterAccount({
+  // 4. Create Staff Account (For Admins to add Waiter or Kitchen)
+  Future<bool> createStaffAccount({
     required String email,
     required String password,
     required String restaurantId,
+    required String role, // 'waiter' or 'kitchen'
   }) async {
     try {
-      // --- Security Check 2: Unauthorized Waiter Creation Prevention ---
+      // --- Security Check 2: Unauthorized Creation Prevention ---
       User? currentUser = _auth.currentUser;
       if (currentUser == null) return false;
 
-      // Verify that the current user is actually an 'admin' of THIS specific restaurant
       DocumentSnapshot adminDoc = await _db
           .collection('staff')
           .doc(currentUser.uid)
@@ -125,7 +124,7 @@ class AuthService {
       if (adminData['role'] != 'admin' ||
           adminData['restaurant_id'] != restaurantId) {
         print(
-          'Security Alert: Unauthorized attempt to create a waiter account!',
+          'Security Alert: Unauthorized attempt to create a staff account!',
         );
         return false;
       }
@@ -136,26 +135,26 @@ class AuthService {
         options: Firebase.app().options,
       );
 
-      // Use the temporary app to create the waiter user
+      // Use the temporary app to create the user
       UserCredential userCredential = await FirebaseAuth.instanceFor(
         app: tempApp,
       ).createUserWithEmailAndPassword(email: email, password: password);
 
-      // Save waiter data to Firestore 'staff' collection
+      // Save staff data to Firestore 'staff' collection
       await _db.collection('staff').doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
-        'restaurant_id': restaurantId, // Tied strictly to Admin's Restaurant ID
-        'role': 'waiter', // Strictly assigned as Waiter
+        'restaurant_id': restaurantId,
+        'role': role, // Can be 'waiter' or 'kitchen'
         'created_at': FieldValue.serverTimestamp(),
       });
 
-      // Delete the temporary app instance so it doesn't cause conflicts
+      // Delete the temporary app instance
       await tempApp.delete();
 
-      return true; // Successfully created
+      return true;
     } catch (e) {
-      print('Waiter Registration Error: $e');
+      print('Staff Registration Error: $e');
       return false;
     }
   }
