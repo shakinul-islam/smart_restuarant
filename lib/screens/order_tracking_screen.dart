@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// NOTE: Make sure universal_html is in pubspec.yaml (universal_html: ^2.2.4)
+import 'package:universal_html/html.dart' as html;
 import '../services/database_service.dart';
 import 'cart_screen.dart'; // REQUIRED FOR CustomerSession
 
@@ -18,15 +20,48 @@ class OrderTrackingScreen extends StatefulWidget {
   State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
 }
 
-class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
+// ================= NEW: ADDED WidgetsBindingObserver FOR LIFECYCLE =================
+class _OrderTrackingScreenState extends State<OrderTrackingScreen> with WidgetsBindingObserver {
   final DatabaseService _dbService = DatabaseService();
   String _savedCustomerName = '';
   bool _isLoadingName = true;
+  DateTime? _lastPausedTime; // Track when the app went to background
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Register Observer
     _loadSavedName();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove Observer
+    super.dispose();
+  }
+
+  // ================= NEW: SMART AUTO-WAKEUP LOGIC =================
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    if (state == AppLifecycleState.paused) {
+      // User minimized the browser or switched to another app
+      _lastPausedTime = DateTime.now();
+      print("App went to background at $_lastPausedTime");
+    } else if (state == AppLifecycleState.resumed) {
+      // User came back to the browser
+      print("App resumed.");
+      if (_lastPausedTime != null) {
+        final duration = DateTime.now().difference(_lastPausedTime!);
+        // If user was away for more than 1 minute (60 seconds), force a hard reload
+        // to prevent Flutter Web from crashing or showing a blank CanvasKit screen.
+        if (duration.inSeconds > 60) {
+          print("User was away for ${duration.inMinutes} mins. Forcing reload to prevent blank screen.");
+          html.window.location.reload();
+        }
+      }
+    }
   }
 
   // ================= FIXED: SAFE SESSION LOAD =================
@@ -831,11 +866,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     );
   }
 }
-
-/*
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/database_service.dart';
+import 'cart_screen.dart'; // REQUIRED FOR CustomerSession
 
 class OrderTrackingScreen extends StatefulWidget {
   final String restaurantId;
@@ -853,6 +888,34 @@ class OrderTrackingScreen extends StatefulWidget {
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   final DatabaseService _dbService = DatabaseService();
+  String _savedCustomerName = '';
+  bool _isLoadingName = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedName();
+  }
+
+  // ================= FIXED: SAFE SESSION LOAD =================
+  Future<void> _loadSavedName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? savedName = prefs.getString('customer_name');
+      if (savedName != null && savedName.isNotEmpty) {
+        CustomerSession.name = savedName;
+      }
+    } catch (e) {
+      print("SharedPreferences disabled by mobile browser: $e");
+    }
+
+    if (mounted) {
+      setState(() {
+        _savedCustomerName = CustomerSession.name;
+        _isLoadingName = false;
+      });
+    }
+  }
 
   Color _getStatusColor(String status) {
     switch (status) {
@@ -1015,7 +1078,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     );
   }
 
-  // ================= INLINE PAYMENT SUCCESS UI =================
   Widget _buildPaymentSuccessCard(
     Map<String, dynamic> data,
     String customerName,
@@ -1235,6 +1297,13 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingName) {
+      return const Scaffold(
+        backgroundColor: Colors.deepOrange,
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -1266,37 +1335,56 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             return const Center(child: Text('Error tracking orders!'));
 
           final allOrders = snapshot.data?.docs ?? [];
+
           final tableOrders = allOrders.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
+            final String cName = data['customer_name'] ?? 'Guest';
+
+            // SMART LOGIC: If storage blocked or no name yet, show whole table. Otherwise, filter by name.
+            bool nameMatches =
+                _savedCustomerName.isEmpty ||
+                cName.trim().toLowerCase() ==
+                    _savedCustomerName.trim().toLowerCase();
+
             return data['table_no'] == widget.tableNumber &&
-                data['status'] != 'Cancelled';
+                data['status'] != 'Cancelled' &&
+                nameMatches;
           }).toList();
 
-          if (tableOrders.isEmpty) {
+          if (tableOrders.isEmpty || _savedCustomerName.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          final activeOrders = tableOrders.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            bool isPaid = data['payment_status'] == 'Paid';
+            bool isServed = data['status'] == 'Served';
+            return !(isPaid && isServed);
+          }).toList();
+
+          if (activeOrders.isEmpty) {
+            final latestOrder =
+                tableOrders.first.data() as Map<String, dynamic>;
+            if (latestOrder['payment_status'] == 'Paid' &&
+                latestOrder['status'] == 'Served') {
+              Timestamp? clearedAt = latestOrder['cleared_at'];
+              if (clearedAt != null &&
+                  DateTime.now().difference(clearedAt.toDate()).inMinutes <
+                      30) {
+                return _buildPaymentSuccessCard(
+                  latestOrder,
+                  _savedCustomerName,
+                );
+              }
+            }
             return _buildEmptyState();
           }
 
           double activeGrandTotal = 0.0;
           List<Widget> orderCards = [];
 
-          for (var order in tableOrders) {
+          for (var order in activeOrders) {
             final data = order.data() as Map<String, dynamic>;
-            final String customerName = data['customer_name'] ?? 'Guest';
-            bool isPaid = data['payment_status'] == 'Paid';
-            bool isServed = data['status'] == 'Served';
-
-            // IF COMPLETED (Paid + Served), Check if within 30 minutes
-            if (isPaid && isServed) {
-              Timestamp? clearedAt = data['cleared_at'];
-              if (clearedAt != null &&
-                  DateTime.now().difference(clearedAt.toDate()).inMinutes <
-                      30) {
-                orderCards.add(_buildPaymentSuccessCard(data, customerName));
-              }
-              continue; // Don't add to Grand Total
-            }
-
-            // IF ACTIVE (Not fully Paid or Not Served)
             final String orderId = order.id;
             final String status = data['status'] ?? 'Pending';
             final int? estimatedTime = data['estimatedTime'];
@@ -1333,7 +1421,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    customerName,
+                                    _savedCustomerName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
