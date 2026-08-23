@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // NEW IMPORT
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/database_service.dart';
+import 'cart_screen.dart'; // REQUIRED FOR CustomerSession
 
 class OrderTrackingScreen extends StatefulWidget {
   final String restaurantId;
@@ -28,12 +29,21 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     _loadSavedName();
   }
 
-  // ================= NEW: LOAD SAVED NAME =================
+  // ================= FIXED: SAFE SESSION LOAD =================
   Future<void> _loadSavedName() async {
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? savedName = prefs.getString('customer_name');
+      if (savedName != null && savedName.isNotEmpty) {
+        CustomerSession.name = savedName;
+      }
+    } catch (e) {
+      print("SharedPreferences disabled by mobile browser: $e");
+    }
+
     if (mounted) {
       setState(() {
-        _savedCustomerName = prefs.getString('customer_name') ?? '';
+        _savedCustomerName = CustomerSession.name;
         _isLoadingName = false;
       });
     }
@@ -458,16 +468,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           final allOrders = snapshot.data?.docs ?? [];
 
-          // ================= NEW: STRICT FILTERING BY NAME =================
           final tableOrders = allOrders.where((doc) {
             final data = doc.data() as Map<String, dynamic>;
             final String cName = data['customer_name'] ?? 'Guest';
+
+            // SMART LOGIC: If storage blocked or no name yet, show whole table. Otherwise, filter by name.
+            bool nameMatches =
+                _savedCustomerName.isEmpty ||
+                cName.trim().toLowerCase() ==
+                    _savedCustomerName.trim().toLowerCase();
+
             return data['table_no'] == widget.tableNumber &&
                 data['status'] != 'Cancelled' &&
-                cName.trim().toLowerCase() ==
-                    _savedCustomerName
-                        .trim()
-                        .toLowerCase(); // ONLY MATCHING THIS CUSTOMER
+                nameMatches;
           }).toList();
 
           if (tableOrders.isEmpty || _savedCustomerName.isEmpty) {

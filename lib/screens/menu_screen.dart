@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // NEW IMPORT
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/menu_item.dart';
 import '../services/cart_provider.dart';
 import '../services/database_service.dart';
-import 'cart_screen.dart';
+import 'cart_screen.dart'; // REQUIRED FOR CustomerSession
 import 'order_tracking_screen.dart';
 import 'customer_food_details.dart';
 
@@ -33,7 +33,7 @@ class _MenuScreenState extends State<MenuScreen> {
   String _searchQuery = '';
   String _selectedSort = 'default';
   String _selectedCategoryFilter = 'All';
-  String _savedCustomerName = ''; // NEW: To track active user's orders
+  String _savedCustomerName = '';
 
   Timer? _sliderTimer;
   final PageController _pageController = PageController(viewportFraction: 0.9);
@@ -43,7 +43,7 @@ class _MenuScreenState extends State<MenuScreen> {
   void initState() {
     super.initState();
     _menuStream = _dbService.getMenuItems(widget.restaurantId);
-    _loadCustomerName(); // Load the session
+    _loadCustomerName();
 
     _sliderTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_pageController.hasClients) {
@@ -57,12 +57,21 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  // ================= NEW: LOAD SAVED SESSION NAME =================
+  // ================= FIXED: SAFE SESSION LOAD =================
   Future<void> _loadCustomerName() async {
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? savedName = prefs.getString('customer_name');
+      if (savedName != null && savedName.isNotEmpty) {
+        CustomerSession.name = savedName;
+      }
+    } catch (e) {
+      print("SharedPreferences disabled by mobile browser: $e");
+    }
+
     if (mounted) {
       setState(() {
-        _savedCustomerName = prefs.getString('customer_name') ?? '';
+        _savedCustomerName = CustomerSession.name;
       });
     }
   }
@@ -543,18 +552,19 @@ class _MenuScreenState extends State<MenuScreen> {
                         stream: _dbService.getOrders(widget.restaurantId),
                         builder: (context, snapshot) {
                           int activeOrderCount = 0;
-                          if (snapshot.hasData &&
-                              _savedCustomerName.isNotEmpty) {
-                            // ONLY LOAD IF NAME EXISTS
+                          if (snapshot.hasData) {
                             final allOrders = snapshot.data!.docs;
                             activeOrderCount = allOrders.where((doc) {
                               final data = doc.data() as Map<String, dynamic>;
                               final cName = data['customer_name'] ?? 'Guest';
-                              return data['table_no'] == widget.tableNumber &&
+
+                              bool nameMatches =
+                                  _savedCustomerName.isEmpty ||
                                   cName.toString().trim().toLowerCase() ==
-                                      _savedCustomerName
-                                          .trim()
-                                          .toLowerCase() && // FILTER BY CURRENT CUSTOMER
+                                      _savedCustomerName.trim().toLowerCase();
+
+                              return data['table_no'] == widget.tableNumber &&
+                                  nameMatches &&
                                   (data['payment_status'] == 'Unpaid' ||
                                       data['payment_status'] ==
                                           'Pending Verification') &&

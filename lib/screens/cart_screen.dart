@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // NEW IMPORT
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cart_provider.dart';
 import '../services/database_service.dart';
+
+// ================= NEW: RAM MEMORY FALLBACK =================
+class CustomerSession {
+  static String name = '';
+}
 
 class CartScreen extends StatefulWidget {
   final String restaurantId;
@@ -36,16 +41,24 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     _fetchPaymentSettings();
-    _loadSavedName(); // NEW: Load Saved Session
+    _loadSavedName();
   }
 
-  // ================= NEW: LOAD SESSION NAME =================
+  // ================= FIXED: SAFE LOAD SESSION =================
   Future<void> _loadSavedName() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? savedName = prefs.getString('customer_name');
-    if (savedName != null && savedName.isNotEmpty && mounted) {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? savedName = prefs.getString('customer_name');
+      if (savedName != null && savedName.isNotEmpty) {
+        CustomerSession.name = savedName;
+      }
+    } catch (e) {
+      print("SharedPreferences disabled by mobile browser: $e");
+    }
+
+    if (CustomerSession.name.isNotEmpty && mounted) {
       setState(() {
-        _nameController.text = savedName;
+        _nameController.text = CustomerSession.name;
       });
     }
   }
@@ -116,33 +129,50 @@ class _CartScreenState extends State<CartScreen> {
 
     setState(() => _isOrdering = true);
 
-    // ================= NEW: SAVE SESSION NAME BEFORE ORDERING =================
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('customer_name', _nameController.text.trim());
+    // ================= FIXED: SAFE SAVE SESSION =================
+    CustomerSession.name = _nameController.text.trim();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('customer_name', CustomerSession.name);
+    } catch (e) {
+      print("SharedPreferences disabled by mobile browser: $e");
+    }
 
-    final bool success = await _dbService.placeOrder(
-      cartItems: cart.items.values.toList(),
-      totalAmount: cart.totalAmount,
-      tableNumber: widget.tableNumber,
-      restaurantId: widget.restaurantId,
-      paymentMethod: _paymentMethod,
-      customerName: _nameController.text.trim(),
-      senderNumber: _paymentMethod != 'Cash'
-          ? _phoneController.text.trim()
-          : null,
-      trxId: _paymentMethod != 'Cash' ? _trxIdController.text.trim() : null,
-    );
+    try {
+      final bool success = await _dbService.placeOrder(
+        cartItems: cart.items.values.toList(),
+        totalAmount: cart.totalAmount,
+        tableNumber: widget.tableNumber,
+        restaurantId: widget.restaurantId,
+        paymentMethod: _paymentMethod,
+        customerName: CustomerSession.name,
+        senderNumber: _paymentMethod != 'Cash'
+            ? _phoneController.text.trim()
+            : null,
+        trxId: _paymentMethod != 'Cash' ? _trxIdController.text.trim() : null,
+      );
 
-    setState(() => _isOrdering = false);
+      setState(() => _isOrdering = false);
 
-    if (success) {
-      if (!mounted) return;
-      _showSuccessDialog(cart);
-    } else {
-      if (!mounted) return;
+      if (success) {
+        if (!mounted) return;
+        _showSuccessDialog(cart);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to place order. Try again!'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      // If Database fails, ensure loading stops
+      setState(() => _isOrdering = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to place order. Try again!'),
+          content: Text('Something went wrong! Check connection.'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
