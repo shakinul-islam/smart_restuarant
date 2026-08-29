@@ -11,7 +11,8 @@ class DatabaseService {
     required int tableNumber,
     required String restaurantId,
     required String paymentMethod,
-    required String customerName, // NEW: Customer Name added
+    required String customerName,
+    required String orderType,
     String? senderNumber,
     String? trxId,
   }) async {
@@ -29,7 +30,8 @@ class DatabaseService {
       await _db.collection('orders').add({
         'restaurant_id': restaurantId,
         'table_no': tableNumber,
-        'customer_name': customerName, // Save specific customer name
+        'customer_name': customerName,
+        'order_type': orderType,
         'items': orderItems,
         'total_amount': totalAmount,
         'status': 'Pending',
@@ -131,7 +133,10 @@ class DatabaseService {
     }
   }
 
-  Future<bool> updateMenuItem(String docId, Map<String, dynamic> updatedData) async {
+  Future<bool> updateMenuItem(
+    String docId,
+    Map<String, dynamic> updatedData,
+  ) async {
     try {
       await _db.collection('MenuItems').doc(docId).update(updatedData);
       return true;
@@ -151,7 +156,6 @@ class DatabaseService {
     }
   }
 
-  // UPDATED: Now clears table specifically for a single CUSTOMER
   Future<bool> confirmPaymentAndClearTable({
     required String restaurantId,
     required int tableNo,
@@ -163,7 +167,7 @@ class DatabaseService {
           .collection('orders')
           .where('restaurant_id', isEqualTo: restaurantId)
           .where('table_no', isEqualTo: tableNo)
-          .where('customer_name', isEqualTo: customerName) // Grouping by Customer
+          .where('customer_name', isEqualTo: customerName)
           .where('payment_status', whereIn: ['Unpaid', 'Pending Verification'])
           .get();
 
@@ -172,6 +176,7 @@ class DatabaseService {
         batch.update(doc.reference, {
           'payment_status': 'Paid',
           'amount_received': amountReceived,
+          'status': 'Served',
           'cleared_at': FieldValue.serverTimestamp(),
         });
       }
@@ -183,7 +188,11 @@ class DatabaseService {
     }
   }
 
-  Future<bool> savePaymentSettings(String restaurantId, String bkashNumber, String nagadNumber) async {
+  Future<bool> savePaymentSettings(
+    String restaurantId,
+    String bkashNumber,
+    String nagadNumber,
+  ) async {
     try {
       await _db.collection('restaurant_settings').doc(restaurantId).set({
         'bkash_number': bkashNumber,
@@ -199,7 +208,10 @@ class DatabaseService {
 
   Future<Map<String, dynamic>?> getPaymentSettings(String restaurantId) async {
     try {
-      DocumentSnapshot doc = await _db.collection('restaurant_settings').doc(restaurantId).get();
+      DocumentSnapshot doc = await _db
+          .collection('restaurant_settings')
+          .doc(restaurantId)
+          .get();
       if (doc.exists) return doc.data() as Map<String, dynamic>;
       return null;
     } catch (e) {
@@ -208,7 +220,9 @@ class DatabaseService {
     }
   }
 
-  Future<List<QueryDocumentSnapshot>> getOrdersForAnalytics(String restaurantId) async {
+  Future<List<QueryDocumentSnapshot>> getOrdersForAnalytics(
+    String restaurantId,
+  ) async {
     try {
       QuerySnapshot snapshot = await _db
           .collection('orders')
@@ -236,5 +250,28 @@ class DatabaseService {
         .where('restaurant_id', isEqualTo: restaurantId)
         .where('status', whereIn: ['Pending', 'Cooking'])
         .snapshots();
+  }
+
+  // ================= NEW: SUBMIT DEVELOPER PAYMENT =================
+  Future<bool> submitDeveloperPayment({
+    required String restaurantId,
+    required String senderNumber,
+    required String trxId,
+    required String amount,
+  }) async {
+    try {
+      await _db.collection('developer_payments').add({
+        'restaurant_id': restaurantId,
+        'sender_number': senderNumber,
+        'trx_id': trxId,
+        'amount': double.tryParse(amount) ?? 0.0,
+        'status': 'Pending Verification',
+        'submitted_at': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      print('Error submitting payment: $e');
+      return false;
+    }
   }
 }
