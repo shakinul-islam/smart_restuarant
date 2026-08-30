@@ -127,13 +127,11 @@ class _WaiterScreenState extends State<WaiterScreen> {
             right: 24,
             top: 12,
           ),
-          // OVERFLOW FIX: Changed Column to ListView to make the whole sheet scrollable
           child: ListView(
             controller: controller,
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.zero,
             children: [
-              // Drag Handle
               Center(
                 child: Container(
                   width: 50,
@@ -212,8 +210,6 @@ class _WaiterScreenState extends State<WaiterScreen> {
                 ),
               ),
               const Divider(thickness: 1, height: 24, color: Colors.black12),
-
-              // OVERFLOW FIX: Removed ConstrainedBox, used shrinkWrap true
               ListView.builder(
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
@@ -623,7 +619,7 @@ class _WaiterScreenState extends State<WaiterScreen> {
                         padding: const EdgeInsets.all(16.0),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          mainAxisExtent: 280,
+                          mainAxisExtent: 290,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
@@ -634,6 +630,10 @@ class _WaiterScreenState extends State<WaiterScreen> {
                           String customerName = groupKey.split('|')[1];
                           List<DocumentSnapshot> tableOrders =
                               groupedOrders[groupKey]!;
+
+                          // ================= NEW: Scroll Controller attached here =================
+                          final ScrollController _cardScrollController =
+                              ScrollController();
 
                           List<Map<String, dynamic>> itemsList = [];
                           bool hasPending = false,
@@ -834,8 +834,12 @@ class _WaiterScreenState extends State<WaiterScreen> {
 
                                 Expanded(
                                   child: Scrollbar(
+                                    controller:
+                                        _cardScrollController, // <--- Attached controller here
                                     thumbVisibility: true,
                                     child: ListView.builder(
+                                      controller:
+                                          _cardScrollController, // <--- And here
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 16,
                                         vertical: 8,
@@ -929,30 +933,35 @@ class _WaiterScreenState extends State<WaiterScreen> {
                                   child: Column(
                                     children: [
                                       if (isAllPaid && tableStatus != 'Served')
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8,
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 8.0,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.withOpacity(
-                                              0.1,
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8,
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              'Payment Received by Admin ✅',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
                                             ),
                                           ),
-                                          child: const Text(
-                                            'Payment Received by Admin ✅',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        )
-                                      else if (tableStatus == 'Ready')
+                                        ),
+
+                                      if (tableStatus == 'Ready')
                                         SizedBox(
                                           width: double.infinity,
                                           height: 45,
@@ -1893,9 +1902,10 @@ class _WaiterScreenState extends State<WaiterScreen> {
             right: 24,
             top: 12,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
+            controller: controller,
+            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.zero,
             children: [
               Center(
                 child: Container(
@@ -1975,84 +1985,80 @@ class _WaiterScreenState extends State<WaiterScreen> {
                 ),
               ),
               const Divider(thickness: 1, height: 24, color: Colors.black12),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.3,
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    final bool isParcel = item['isParcel'] ?? false;
+              ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final bool isParcel = item['isParcel'] ?? false;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 14,
-                            color: isParcel ? Colors.deepOrange : Colors.teal,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '${item['quantity']}x ${item['name']}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: isParcel
-                                    ? Colors.deepOrange[700]
-                                    : Colors.black87,
-                              ),
-                            ),
-                          ),
-                          if (isParcel)
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.deepOrange.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: Colors.deepOrange.withOpacity(0.3),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('🛍️', style: TextStyle(fontSize: 10)),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Parcel',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.deepOrange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          Text(
-                            '৳${(item['totalPrice'] ?? 0.0).toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 14,
+                          color: isParcel ? Colors.deepOrange : Colors.teal,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${item['quantity']}x ${item['name']}',
+                            style: TextStyle(
                               fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isParcel
+                                  ? Colors.deepOrange[700]
+                                  : Colors.black87,
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                        if (isParcel)
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.deepOrange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Colors.deepOrange.withOpacity(0.3),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('🛍️', style: TextStyle(fontSize: 10)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Parcel',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.deepOrange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Text(
+                          '৳${(item['totalPrice'] ?? 0.0).toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               const Divider(thickness: 1, height: 24, color: Colors.black12),
               _buildDetailRow(
@@ -2136,133 +2142,136 @@ class _WaiterScreenState extends State<WaiterScreen> {
               right: 24,
               top: 12,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Serve $customerName (T$tableNo)',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueGrey,
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Serve $customerName (T$tableNo)',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.grey),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const Divider(color: Colors.black12, height: 24),
-                const Text(
-                  'Send a greeting message to the customer (This will show on their tracking screen):',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.black87,
-                    height: 1.4,
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: messageCtrl,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Type a pleasant message...',
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: Colors.teal),
+                  const Divider(color: Colors.black12, height: 24),
+                  const Text(
+                    'Send a greeting message to the customer (This will show on their tracking screen):',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Colors.black87,
+                      height: 1.4,
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: messageCtrl,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Type a pleasant message...',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Colors.teal),
                       ),
                     ),
-                    onPressed: isProcessing
-                        ? null
-                        : () async {
-                            setSheetState(() => isProcessing = true);
-                            for (var order in tableOrders) {
-                              if ((order.data() as Map)['status'] == 'Ready') {
-                                await _dbService.updateOrderStatus(
-                                  order.id,
-                                  'Served',
-                                  thankYouMessage: messageCtrl.text.trim(),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      onPressed: isProcessing
+                          ? null
+                          : () async {
+                              setSheetState(() => isProcessing = true);
+                              for (var order in tableOrders) {
+                                if ((order.data() as Map)['status'] ==
+                                    'Ready') {
+                                  await _dbService.updateOrderStatus(
+                                    order.id,
+                                    'Served',
+                                    thankYouMessage: messageCtrl.text.trim(),
+                                  );
+                                }
+                              }
+                              setSheetState(() => isProcessing = false);
+
+                              if (mounted) {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Food Served to Customer! ✅',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
                                 );
                               }
-                            }
-                            setSheetState(() => isProcessing = false);
-
-                            if (mounted) {
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Food Served to Customer! ✅',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-                          },
-                    child: isProcessing
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
+                            },
+                      child: isProcessing
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Text(
+                              'Mark Served & Send Greeting',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          )
-                        : const Text(
-                            'Mark Served & Send Greeting',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -2384,7 +2393,8 @@ class _WaiterScreenState extends State<WaiterScreen> {
                         padding: const EdgeInsets.all(16.0),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          mainAxisExtent: 280,
+                          mainAxisExtent:
+                              290, // Slightly increased to fit multiple buttons
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
@@ -2592,6 +2602,7 @@ class _WaiterScreenState extends State<WaiterScreen> {
                                   ),
                                 ),
                                 const Divider(height: 1, color: Colors.black12),
+
                                 Expanded(
                                   child: Scrollbar(
                                     thumbVisibility: true,
@@ -2688,31 +2699,39 @@ class _WaiterScreenState extends State<WaiterScreen> {
                                   padding: const EdgeInsets.all(12.0),
                                   child: Column(
                                     children: [
+                                      // ================= FIXED LOGIC HERE =================
+                                      // First show payment received status if true
                                       if (isAllPaid && tableStatus != 'Served')
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8,
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 8.0,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.withOpacity(
-                                              0.1,
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8,
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              'Payment Received by Admin ✅',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
                                             ),
                                           ),
-                                          child: const Text(
-                                            'Payment Received by Admin ✅',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        )
-                                      else if (tableStatus == 'Ready')
+                                        ),
+
+                                      // Then process the action button/status
+                                      if (tableStatus == 'Ready')
                                         SizedBox(
                                           width: double.infinity,
                                           height: 45,
@@ -2863,6 +2882,7 @@ class _WaiterScreenState extends State<WaiterScreen> {
   Widget _buildSalesHistory() {
     return Column(
       children: [
+        // Modern Filter Bar
         Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -3379,7 +3399,8 @@ class _WaiterScreenState extends State<WaiterScreen> {
                         ),
                       ),
                       onPressed: () async {
-                        await AuthService().logout();
+                        await _authService.logout();
+                        if (!mounted) return;
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
