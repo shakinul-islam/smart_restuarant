@@ -16,8 +16,7 @@ class NotificationService {
 
   // 1. Initialize OneSignal (Call this in main.dart)
   Future<void> init() async {
-    // ================= FIXED: PREVENT CRASH ON WEB =================
-    if (kIsWeb) return;
+    if (kIsWeb) return; // Prevent Web Crash
 
     try {
       OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
@@ -28,12 +27,12 @@ class NotificationService {
     }
   }
 
-  // 2. Set Device Tags on Login (e.g. role: admin/waiter/kitchen)
+  // 2. Set Device Tags on Login
   Future<void> setUserRole({
     required String restaurantId,
     required String role,
   }) async {
-    if (kIsWeb) return; // Prevent MissingPluginException on Web
+    if (kIsWeb) return;
 
     try {
       await OneSignal.User.addTags({
@@ -50,7 +49,7 @@ class NotificationService {
 
   // 3. Clear Tags on Logout
   Future<void> clearUserRole() async {
-    if (kIsWeb) return; // Prevent MissingPluginException on Web
+    if (kIsWeb) return;
 
     try {
       await OneSignal.User.removeTags(['restaurant_id', 'role']);
@@ -68,15 +67,6 @@ class NotificationService {
     required String message,
   }) async {
     try {
-      String endpoint = 'https://onesignal.com/api/v1/notifications';
-
-      // ================= FIXED: NEW PROXY FOR WEB CORS =================
-      if (kIsWeb) {
-        endpoint = 'https://thingproxy.freeboard.io/fetch/$endpoint';
-      }
-
-      final url = Uri.parse(endpoint);
-
       final headers = {
         'Content-Type': 'application/json; charset=utf-8',
         'Authorization': 'Basic $_restApiKey',
@@ -103,19 +93,42 @@ class NotificationService {
         ],
       };
 
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(body),
-      );
+      // ================= FIXED: BULLETPROOF PROXY FALLBACK =================
+      List<String> endpoints = [];
 
-      if (response.statusCode == 200) {
-        debugPrint('Push notification sent to $targetRole successfully');
-        return true;
+      if (kIsWeb) {
+        // ওয়েবের ক্ষেত্রে আমরা ৩টি আলাদা প্রক্সি সার্ভার লিস্ট করে দিয়েছি।
+        // কোনো কারণে একটি ডাউন থাকলে অ্যাপ অটোমেটিক পরেরটি ট্রাই করবে।
+        endpoints = [
+          'https://corsproxy.io/?https://onesignal.com/api/v1/notifications',
+          'https://api.codetabs.com/v1/proxy?quest=https://onesignal.com/api/v1/notifications',
+          'https://cors-proxy.fringe.zone/https://onesignal.com/api/v1/notifications',
+        ];
       } else {
-        debugPrint('Failed to send notification: ${response.body}');
-        return false;
+        // অ্যান্ড্রয়েড অ্যাপ থেকে সরাসরি কল হবে, কোনো প্রক্সি লাগবে না।
+        endpoints = ['https://onesignal.com/api/v1/notifications'];
       }
+
+      // লুপ চালিয়ে প্রক্সিগুলো চেক করা হচ্ছে
+      for (String endpoint in endpoints) {
+        try {
+          final response = await http.post(
+            Uri.parse(endpoint),
+            headers: headers,
+            body: jsonEncode(body),
+          );
+
+          if (response.statusCode == 200) {
+            debugPrint('Push notification sent successfully via: $endpoint');
+            return true; // নোটিফিকেশন চলে গেলে লুপ থেকে বের হয়ে যাবে
+          }
+        } catch (e) {
+          debugPrint('Proxy failed ($endpoint), trying next proxy...');
+        }
+      }
+
+      debugPrint('All notification proxies failed.');
+      return false;
     } catch (e) {
       debugPrint('Error sending push notification: $e');
       return false;
