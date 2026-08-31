@@ -16,6 +16,9 @@ class NotificationService {
 
   // 1. Initialize OneSignal (Call this in main.dart)
   Future<void> init() async {
+    // ================= FIXED: PREVENT CRASH ON WEB =================
+    if (kIsWeb) return;
+
     try {
       OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
       OneSignal.initialize(_oneSignalAppId);
@@ -30,6 +33,8 @@ class NotificationService {
     required String restaurantId,
     required String role,
   }) async {
+    if (kIsWeb) return; // Prevent MissingPluginException on Web
+
     try {
       await OneSignal.User.addTags({
         'restaurant_id': restaurantId,
@@ -45,6 +50,8 @@ class NotificationService {
 
   // 3. Clear Tags on Logout
   Future<void> clearUserRole() async {
+    if (kIsWeb) return; // Prevent MissingPluginException on Web
+
     try {
       await OneSignal.User.removeTags(['restaurant_id', 'role']);
       debugPrint('OneSignal tags cleared.');
@@ -61,7 +68,14 @@ class NotificationService {
     required String message,
   }) async {
     try {
-      final url = Uri.parse('https://onesignal.com/api/v1/notifications');
+      String endpoint = 'https://onesignal.com/api/v1/notifications';
+
+      // ================= FIXED: NEW PROXY FOR WEB CORS =================
+      if (kIsWeb) {
+        endpoint = 'https://thingproxy.freeboard.io/fetch/$endpoint';
+      }
+
+      final url = Uri.parse(endpoint);
 
       final headers = {
         'Content-Type': 'application/json; charset=utf-8',
@@ -72,7 +86,6 @@ class NotificationService {
         'app_id': _oneSignalAppId,
         'headings': {'en': title},
         'contents': {'en': message},
-        // Target devices having both matching restaurant_id and role tags
         'filters': [
           {
             'field': 'tag',
@@ -111,7 +124,6 @@ class NotificationService {
 
   // ===================== ROLE SPECIFIC TRIGGERS =====================
 
-  // Trigger: Notify Kitchen when new order arrives
   Future<void> notifyKitchenNewOrder({
     required String restaurantId,
     required int tableNo,
@@ -127,7 +139,6 @@ class NotificationService {
     );
   }
 
-  // Trigger: Notify Waiter when kitchen marks food as Ready
   Future<void> notifyWaiterFoodReady({
     required String restaurantId,
     required int tableNo,
@@ -143,7 +154,6 @@ class NotificationService {
     );
   }
 
-  // Trigger: Notify Admin when digital payment is submitted (bKash/Nagad)
   Future<void> notifyAdminDigitalPayment({
     required String restaurantId,
     required int tableNo,
