@@ -11,8 +11,7 @@ class NotificationService {
 
   // ===================== ONESIGNAL CREDENTIALS =====================
   static const String _oneSignalAppId = '10d6da1a-c359-447c-92c2-2be53d9a2ec5';
-  static const String _restApiKey =
-      'os_v2_app_cdlnugwdlfchzewcfpst3groyvuejozqbodetqn6bn4muk3muy4gkes2fy6jc7ecqyxoosxsbvldaol6ah6zh2h3doqdfdmvk3vtohy';
+  // REST API Key রিমুভ করা হয়েছে! এটি এখন সুরক্ষিতভাবে Cloudflare Worker-এর ভেতরে আছে।
 
   // 1. Initialize OneSignal (Call this in main.dart)
   Future<void> init() async {
@@ -69,7 +68,7 @@ class NotificationService {
     try {
       final headers = {
         'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': 'Basic $_restApiKey',
+        // Authorization লাইনটি রিমুভ করে দিয়েছি!
       };
 
       final body = {
@@ -93,23 +92,18 @@ class NotificationService {
         ],
       };
 
-      // ================= FIXED: BULLETPROOF PROXY FALLBACK =================
+      // ================= FIXED: CLOUDFLARE CUSTOM PROXY =================
       List<String> endpoints = [];
 
       if (kIsWeb) {
-        // ওয়েবের ক্ষেত্রে আমরা ৩টি আলাদা প্রক্সি সার্ভার লিস্ট করে দিয়েছি।
-        // কোনো কারণে একটি ডাউন থাকলে অ্যাপ অটোমেটিক পরেরটি ট্রাই করবে।
-        endpoints = [
-          'https://corsproxy.io/?https://onesignal.com/api/v1/notifications',
-          'https://api.codetabs.com/v1/proxy?quest=https://onesignal.com/api/v1/notifications',
-          'https://cors-proxy.fringe.zone/https://onesignal.com/api/v1/notifications',
-        ];
+        // নিচে আপনার Cloudflare Worker এর আসল লিংকটি দিন
+        endpoints = ['https://onesignal-proxy.YOUR-USERNAME.workers.dev'];
       } else {
-        // অ্যান্ড্রয়েড অ্যাপ থেকে সরাসরি কল হবে, কোনো প্রক্সি লাগবে না।
+        // অ্যান্ড্রয়েড অ্যাপ থেকে সরাসরি কল হবে, কোনো প্রক্সি লাগবে না।
         endpoints = ['https://onesignal.com/api/v1/notifications'];
       }
 
-      // লুপ চালিয়ে প্রক্সিগুলো চেক করা হচ্ছে
+      // লুপ চালিয়ে প্রক্সিগুলো চেক করা হচ্ছে
       for (String endpoint in endpoints) {
         try {
           final response = await http.post(
@@ -120,7 +114,7 @@ class NotificationService {
 
           if (response.statusCode == 200) {
             debugPrint('Push notification sent successfully via: $endpoint');
-            return true; // নোটিফিকেশন চলে গেলে লুপ থেকে বের হয়ে যাবে
+            return true;
           }
         } catch (e) {
           debugPrint('Proxy failed ($endpoint), trying next proxy...');

@@ -112641,11 +112641,11 @@ au6(a,b,a0,a1){var s=0,r=A.w(t.y),q,p=2,o=[],n,m,l,k,j,i,h,g,f,e,d,c
 var $async$tB=A.r(function(a2,a3){if(a2===1){o.push(a3)
 s=p}for(;;)switch(s){case 0:p=4
 h=t.N
-n=A.af(["Content-Type","application/json; charset=utf-8","Authorization","Basic os_v2_app_cdlnugwdlfchzewcfpst3groyvuejozqbodetqn6bn4muk3muy4gkes2fy6jc7ecqyxoosxsbvldaol6ah6zh2h3doqdfdmvk3vtohy"],h,h)
+n=A.af(["Content-Type","application/json; charset=utf-8"],h,h)
 m=A.af(["app_id","10d6da1a-c359-447c-92c2-2be53d9a2ec5","headings",A.af(["en",a1],h,h),"contents",A.af(["en",a],h,h),"filters",A.b([A.af(["field","tag","key","restaurant_id","relation","=","value",b],h,h),A.af(["operator","AND"],h,h),A.af(["field","tag","key","role","relation","=","value",a0.toLowerCase()],h,h)],t.m0)],h,t.K)
 h=t.s
 l=A.b([],h)
-l=A.b(["https://corsproxy.io/?https://onesignal.com/api/v1/notifications","https://api.codetabs.com/v1/proxy?quest=https://onesignal.com/api/v1/notifications","https://cors-proxy.fringe.zone/https://onesignal.com/api/v1/notifications"],h)
+l=A.b(["https://onesignal-proxy.YOUR-USERNAME.workers.dev"],h)
 h=l,g=h.length,f=0
 case 7:if(!(f<h.length)){s=9
 break}k=h[f]
