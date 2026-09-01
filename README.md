@@ -24,6 +24,3 @@ A comprehensive, multi-tenant Software as a Service (SaaS) platform designed to 
 * **Database & Auth:** Firebase (Firestore, Firebase Authentication)
 * **Real-time Push Notifications:** OneSignal
 * **Serverless Proxy:** Cloudflare Workers (JavaScript)
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/yourusername/smart-restaurant-saas.git](https://github.com/yourusername/smart-restaurant-saas.git)
