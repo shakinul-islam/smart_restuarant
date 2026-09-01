@@ -11,7 +11,7 @@ class NotificationService {
 
   // ===================== ONESIGNAL CREDENTIALS =====================
   static const String _oneSignalAppId = '10d6da1a-c359-447c-92c2-2be53d9a2ec5';
-  // REST API Key রিমুভ করা হয়েছে! এটি এখন সুরক্ষিতভাবে Cloudflare Worker-এর ভেতরে আছে।
+  // REST API Key রিমুভ করা হয়েছে! এটি এখন সুরক্ষিতভাবে Cloudflare Worker-এর ভেতরে আছে।
 
   // 1. Initialize OneSignal (Call this in main.dart)
   Future<void> init() async {
@@ -58,7 +58,7 @@ class NotificationService {
     }
   }
 
-  // 4. Base Function: Send Targeted Notification via OneSignal REST API
+  // 4. Base Function: Send Targeted Notification via Cloudflare Proxy
   Future<bool> _sendPushToRole({
     required String restaurantId,
     required String targetRole,
@@ -68,7 +68,7 @@ class NotificationService {
     try {
       final headers = {
         'Content-Type': 'application/json; charset=utf-8',
-        // Authorization লাইনটি রিমুভ করে দিয়েছি!
+        // Authorization লাইনটি রিমুভ করা হয়েছে (এটি Cloudflare সামলাবে)
       };
 
       final body = {
@@ -92,37 +92,26 @@ class NotificationService {
         ],
       };
 
-      // ================= FIXED: CLOUDFLARE CUSTOM PROXY =================
-      List<String> endpoints = [];
+      // ================= FIXED: UNIFIED CLOUDFLARE PROXY =================
+      // ওয়েব এবং অ্যান্ড্রয়েড—উভয় ক্ষেত্রেই আমরা Cloudflare Worker ব্যবহার করছি।
+      // এতে অ্যাপ ডিকম্পাইল করলেও হ্যাকাররা আপনার API Key পাবে না।
+      final String endpoint = 'https://onesignal-proxy.shakinul.workers.dev';
 
-      if (kIsWeb) {
-        // নিচে আপনার Cloudflare Worker এর আসল লিংকটি দিন
-        endpoints = ['https://onesignal-proxy.YOUR-USERNAME.workers.dev'];
+      final response = await http.post(
+        Uri.parse(endpoint),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('Push notification sent successfully via Cloudflare');
+        return true;
       } else {
-        // অ্যান্ড্রয়েড অ্যাপ থেকে সরাসরি কল হবে, কোনো প্রক্সি লাগবে না।
-        endpoints = ['https://onesignal.com/api/v1/notifications'];
+        debugPrint(
+          'Failed to send notification. Status: ${response.statusCode}',
+        );
+        return false;
       }
-
-      // লুপ চালিয়ে প্রক্সিগুলো চেক করা হচ্ছে
-      for (String endpoint in endpoints) {
-        try {
-          final response = await http.post(
-            Uri.parse(endpoint),
-            headers: headers,
-            body: jsonEncode(body),
-          );
-
-          if (response.statusCode == 200) {
-            debugPrint('Push notification sent successfully via: $endpoint');
-            return true;
-          }
-        } catch (e) {
-          debugPrint('Proxy failed ($endpoint), trying next proxy...');
-        }
-      }
-
-      debugPrint('All notification proxies failed.');
-      return false;
     } catch (e) {
       debugPrint('Error sending push notification: $e');
       return false;
