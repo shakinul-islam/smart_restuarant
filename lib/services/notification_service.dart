@@ -95,7 +95,8 @@ class NotificationService {
       // ================= FIXED: UNIFIED CLOUDFLARE PROXY =================
       // ওয়েব এবং অ্যান্ড্রয়েড—উভয় ক্ষেত্রেই আমরা Cloudflare Worker ব্যবহার করছি।
       // এতে অ্যাপ ডিকম্পাইল করলেও হ্যাকাররা আপনার API Key পাবে না।
-      final String endpoint = 'https://onesignal-proxy.shakinul.workers.dev';
+      final String endpoint =
+          'https://onesignal-proxy.shakinulislam017.workers.dev/';
 
       final response = await http.post(
         Uri.parse(endpoint),

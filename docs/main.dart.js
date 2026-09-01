@@ -112643,7 +112643,7 @@ s=p}for(;;)switch(s){case 0:p=4
 i=t.N
 n=A.af(["Content-Type","application/json; charset=utf-8"],i,i)
 m=A.af(["app_id","10d6da1a-c359-447c-92c2-2be53d9a2ec5","headings",A.af(["en",d],i,i),"contents",A.af(["en",a],i,i),"filters",A.b([A.af(["field","tag","key","restaurant_id","relation","=","value",b],i,i),A.af(["operator","AND"],i,i),A.af(["field","tag","key","role","relation","=","value",c.toLowerCase()],i,i)],t.m0)],i,t.K)
-l="https://onesignal-proxy.shakinul.workers.dev"
+l="https://onesignal-proxy.shakinulislam017.workers.dev/"
 s=7
 return A.p(A.bk0(A.iB(l),B.dP.a3s(m,null),n),$async$tB)
 case 7:k=f
