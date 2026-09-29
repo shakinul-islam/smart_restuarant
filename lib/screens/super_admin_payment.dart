@@ -128,6 +128,7 @@ class _SuperAdminPaymentScreenState extends State<SuperAdminPaymentScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
                     const Text(
@@ -137,6 +138,7 @@ class _SuperAdminPaymentScreenState extends State<SuperAdminPaymentScreen> {
                         color: Colors.grey,
                         fontWeight: FontWeight.w500,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const Divider(height: 32, thickness: 1),
                     Container(
@@ -149,32 +151,36 @@ class _SuperAdminPaymentScreenState extends State<SuperAdminPaymentScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.pink.withOpacity(0.3)),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.account_balance_wallet,
-                            color: Colors.pink,
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Send bKash to: ',
-                            style: TextStyle(
+                      child: const FittedBox(
+                        // FIXED OVERFLOW: Added FittedBox to smoothly scale text on small devices
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.account_balance_wallet,
                               color: Colors.pink,
-                              fontWeight: FontWeight.w600,
+                              size: 20,
                             ),
-                          ),
-                          Text(
-                            '01775199186',
-                            style: TextStyle(
-                              color: Colors.pink,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              letterSpacing: 1,
+                            SizedBox(width: 8),
+                            Text(
+                              'Send bKash to: ',
+                              style: TextStyle(
+                                color: Colors.pink,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              '01775199186',
+                              style: TextStyle(
+                                color: Colors.pink,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),

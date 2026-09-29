@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import '../widgets/notification.dart'; // <--- Notification Widget Import kora holo
 
 class WaiterScreen extends StatefulWidget {
   final String restaurantId;
@@ -1705,6 +1706,13 @@ class _WaiterScreenState extends State<WaiterScreen> {
                   )
                 : null,
             actions: [
+              // ================= NEW: NOTIFICATION BELL =================
+              NotificationBell(
+                restaurantId: widget.restaurantId,
+                role: 'waiter',
+              ),
+              const SizedBox(width: 8),
+
               IconButton(
                 icon: const Icon(Icons.logout_rounded),
                 onPressed: _confirmLogout,
@@ -1772,7 +1780,7 @@ class _WaiterScreenState extends State<WaiterScreen> {
     );
   }
 }
-/*
+/* notification bell chara code
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -2300,8 +2308,9 @@ class _WaiterScreenState extends State<WaiterScreen> {
             final activeOrders = allOrders.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
               if (data['status'] == 'Cancelled') return false;
-              return data['payment_status'] != 'Paid' ||
-                  data['status'] != 'Served';
+              bool isNotPaid = data['payment_status'] != 'Paid';
+              bool isNotServed = data['status'] != 'Served';
+              return isNotPaid || isNotServed;
             }).toList();
 
             if (activeOrders.isEmpty) {
@@ -2393,8 +2402,7 @@ class _WaiterScreenState extends State<WaiterScreen> {
                         padding: const EdgeInsets.all(16.0),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          mainAxisExtent:
-                              290, // Slightly increased to fit multiple buttons
+                          mainAxisExtent: 290,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
@@ -2405,6 +2413,10 @@ class _WaiterScreenState extends State<WaiterScreen> {
                           String customerName = groupKey.split('|')[1];
                           List<DocumentSnapshot> tableOrders =
                               groupedOrders[groupKey]!;
+
+                          // ================= NEW: Scroll Controller attached here =================
+                          final ScrollController _cardScrollController =
+                              ScrollController();
 
                           List<Map<String, dynamic>> itemsList = [];
                           bool hasPending = false,
@@ -2605,8 +2617,12 @@ class _WaiterScreenState extends State<WaiterScreen> {
 
                                 Expanded(
                                   child: Scrollbar(
+                                    controller:
+                                        _cardScrollController, // <--- Attached controller here
                                     thumbVisibility: true,
                                     child: ListView.builder(
+                                      controller:
+                                          _cardScrollController, // <--- And here
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 16,
                                         vertical: 8,
@@ -2699,8 +2715,6 @@ class _WaiterScreenState extends State<WaiterScreen> {
                                   padding: const EdgeInsets.all(12.0),
                                   child: Column(
                                     children: [
-                                      // ================= FIXED LOGIC HERE =================
-                                      // First show payment received status if true
                                       if (isAllPaid && tableStatus != 'Served')
                                         Padding(
                                           padding: const EdgeInsets.only(
@@ -2730,7 +2744,6 @@ class _WaiterScreenState extends State<WaiterScreen> {
                                           ),
                                         ),
 
-                                      // Then process the action button/status
                                       if (tableStatus == 'Ready')
                                         SizedBox(
                                           width: double.infinity,

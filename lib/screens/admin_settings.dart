@@ -6,7 +6,7 @@ import '../services/auth_service.dart';
 import 'qr_generator_screen.dart';
 import 'login_screen.dart';
 import 'super_admin.dart';
-import 'super_admin_payment.dart'; // NEW: Developer Payment File Import
+import 'super_admin_payment.dart';
 
 class AdminSettingsTab extends StatefulWidget {
   final String restaurantId;
@@ -71,7 +71,10 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
             borderRadius: BorderRadius.circular(25),
           ),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 500),
+            constraints: const BoxConstraints(
+              maxWidth: 600,
+              maxHeight: 650, // Height increased for better scrolling
+            ),
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -91,15 +94,16 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Text(
-                      'Manage Staff',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+                    const Expanded(
+                      child: Text(
+                        'Manage Staff',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.grey),
                       onPressed: () => Navigator.pop(context),
@@ -141,56 +145,180 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                           final email = data['email'] ?? 'Unknown Email';
                           final role = data['role'] ?? 'Unknown Role';
 
+                          // ================= FIXED: BEAUTIFUL CUSTOM CARD DESIGN =================
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(color: Colors.grey[200]!),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.grey[200]!,
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              leading: CircleAvatar(
-                                backgroundColor: role == 'waiter'
-                                    ? Colors.blue[100]
-                                    : Colors.orange[100],
-                                child: Icon(
-                                  role == 'waiter'
-                                      ? Icons.room_service
-                                      : Icons.soup_kitchen,
-                                  color: role == 'waiter'
-                                      ? Colors.blue
-                                      : Colors.orange,
-                                ),
-                              ),
-                              title: Text(
-                                email,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  'Role: ${role.toUpperCase()}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontWeight: FontWeight.w500,
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                // Avatar Icon
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: role == 'waiter'
+                                        ? Colors.blue.withOpacity(0.1)
+                                        : Colors.orange.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    role == 'waiter'
+                                        ? Icons.room_service
+                                        : Icons.soup_kitchen,
+                                    color: role == 'waiter'
+                                        ? Colors.blue
+                                        : Colors.orange,
+                                    size: 24,
                                   ),
                                 ),
-                              ),
-                              trailing: IconButton(
-                                tooltip: 'Send Password Reset Link',
-                                icon: const Icon(
-                                  Icons.vpn_key,
-                                  color: Colors.deepPurple,
+                                const SizedBox(width: 16),
+
+                                // Text Details (Expanded fixes overflow issues)
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        email,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: Colors.black87,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey[300]!,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          role.toUpperCase(),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[700],
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                onPressed: () => _sendPasswordReset(email),
-                              ),
+                                const SizedBox(width: 12),
+
+                                // Reset Button
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.deepPurple,
+                                    side: const BorderSide(
+                                      color: Colors.deepPurple,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    minimumSize: const Size(0, 36),
+                                  ),
+                                  child: const Text(
+                                    'Reset',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        title: const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.vpn_key,
+                                              color: Colors.deepPurple,
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              'Reset Password',
+                                              style: TextStyle(
+                                                color: Colors.deepPurple,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        content: Text(
+                                          'An email will be sent to:\n$email\n\nAre you sure you want to send a password reset link?',
+                                          style: const TextStyle(fontSize: 15),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            child: const Text(
+                                              'Cancel',
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Colors.deepPurple,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.pop(ctx);
+                                              _sendPasswordReset(email);
+                                            },
+                                            child: const Text(
+                                              'Send Link',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -223,164 +351,174 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 450),
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: staffFormKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person_add,
-                              color: Colors.green,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Text(
-                            'Add New Staff',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      DropdownButtonFormField<String>(
-                        value: selectedRole,
-                        decoration: _buildInputDecoration(
-                          'Select Staff Role',
-                          Icons.badge,
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'waiter',
-                            child: Text(
-                              'Waiter',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'kitchen',
-                            child: Text(
-                              'Kitchen (Chef)',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                        onChanged: (val) =>
-                            setDialogState(() => selectedRole = val!),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: _buildInputDecoration(
-                          'Staff Email',
-                          Icons.email,
-                        ),
-                        validator: (v) => v!.isEmpty ? 'Enter email' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: passCtrl,
-                        obscureText: true,
-                        decoration: _buildInputDecoration(
-                          'Password',
-                          Icons.lock,
-                        ),
-                        validator: (v) => (v == null || v.length < 6)
-                            ? 'Min 6 characters required'
-                            : null,
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: isAdding
-                                ? null
-                                : () => Navigator.pop(context),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+              // FIXED: Added SingleChildScrollView to prevent keyboard overflow
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: staffFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person_add,
+                                color: Colors.green,
+                                size: 28,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Text(
+                                'Add New Staff',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
                               ),
                             ),
-                            onPressed: isAdding
-                                ? null
-                                : () async {
-                                    if (!staffFormKey.currentState!.validate())
-                                      return;
-                                    setDialogState(() => isAdding = true);
-                                    bool success = await _authService
-                                        .createStaffAccount(
-                                          email: emailCtrl.text.trim(),
-                                          password: passCtrl.text.trim(),
-                                          restaurantId: widget.restaurantId,
-                                          role: selectedRole,
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        DropdownButtonFormField<String>(
+                          value: selectedRole,
+                          decoration: _buildInputDecoration(
+                            'Select Staff Role',
+                            Icons.badge,
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'waiter',
+                              child: Text(
+                                'Waiter',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'kitchen',
+                              child: Text(
+                                'Kitchen (Chef)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) =>
+                              setDialogState(() => selectedRole = val!),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _buildInputDecoration(
+                            'Staff Email',
+                            Icons.email,
+                          ),
+                          validator: (v) => v!.isEmpty ? 'Enter email' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: passCtrl,
+                          obscureText: true,
+                          decoration: _buildInputDecoration(
+                            'Password',
+                            Icons.lock,
+                          ),
+                          validator: (v) => (v == null || v.length < 6)
+                              ? 'Min 6 characters required'
+                              : null,
+                        ),
+                        const SizedBox(height: 32),
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 16,
+                          runSpacing: 10,
+                          children: [
+                            TextButton(
+                              onPressed: isAdding
+                                  ? null
+                                  : () => Navigator.pop(context),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: isAdding
+                                  ? null
+                                  : () async {
+                                      if (!staffFormKey.currentState!
+                                          .validate()) {
+                                        return;
+                                      }
+                                      setDialogState(() => isAdding = true);
+                                      bool success = await _authService
+                                          .createStaffAccount(
+                                            email: emailCtrl.text.trim(),
+                                            password: passCtrl.text.trim(),
+                                            restaurantId: widget.restaurantId,
+                                            role: selectedRole,
+                                          );
+                                      setDialogState(() => isAdding = false);
+                                      if (success) {
+                                        Navigator.pop(context);
+                                        _showMessage(
+                                          '${selectedRole.toUpperCase()} account created successfully!',
+                                          Colors.green,
                                         );
-                                    setDialogState(() => isAdding = false);
-                                    if (success) {
-                                      Navigator.pop(context);
-                                      _showMessage(
-                                        '${selectedRole.toUpperCase()} account created successfully!',
-                                        Colors.green,
-                                      );
-                                    } else {
-                                      _showMessage(
-                                        'Failed to add staff. Email might be in use.',
-                                        Colors.red,
-                                      );
-                                    }
-                                  },
-                            child: isAdding
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
+                                      } else {
+                                        _showMessage(
+                                          'Failed to add staff. Email might be in use.',
+                                          Colors.red,
+                                        );
+                                      }
+                                    },
+                              child: isAdding
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Create Account',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  )
-                                : const Text(
-                                    'Create Account',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -423,138 +561,146 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 450),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.pink.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.payments,
-                            color: Colors.pink,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          'Payment Settings',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.pink,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Set your bKash and Nagad numbers for receiving digital payments from customers.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: bkashCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: _buildInputDecoration(
-                        'bKash Personal Number',
-                        Icons.account_balance_wallet,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nagadCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: _buildInputDecoration(
-                        'Nagad Personal Number',
-                        Icons.account_balance_wallet_outlined,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: isSaving
-                              ? null
-                              : () => Navigator.pop(context),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+              // FIXED: Added SingleChildScrollView to prevent keyboard overflow
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.pink.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.payments,
+                              color: Colors.pink,
+                              size: 28,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pink,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Text(
+                              'Payment Settings',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.pink,
+                              ),
                             ),
                           ),
-                          onPressed: isSaving
-                              ? null
-                              : () async {
-                                  setDialogState(() => isSaving = true);
-                                  bool success = await _dbService
-                                      .savePaymentSettings(
-                                        widget.restaurantId,
-                                        bkashCtrl.text.trim(),
-                                        nagadCtrl.text.trim(),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Set your bKash and Nagad numbers for receiving digital payments from customers.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: bkashCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: _buildInputDecoration(
+                          'bKash Personal Number',
+                          Icons.account_balance_wallet,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: nagadCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: _buildInputDecoration(
+                          'Nagad Personal Number',
+                          Icons.account_balance_wallet_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 16,
+                        runSpacing: 10,
+                        children: [
+                          TextButton(
+                            onPressed: isSaving
+                                ? null
+                                : () => Navigator.pop(context),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.pink,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    setDialogState(() => isSaving = true);
+                                    bool success = await _dbService
+                                        .savePaymentSettings(
+                                          widget.restaurantId,
+                                          bkashCtrl.text.trim(),
+                                          nagadCtrl.text.trim(),
+                                        );
+                                    setDialogState(() => isSaving = false);
+                                    if (success) {
+                                      Navigator.pop(context);
+                                      _showMessage(
+                                        'Payment settings updated!',
+                                        Colors.green,
                                       );
-                                  setDialogState(() => isSaving = false);
-                                  if (success) {
-                                    Navigator.pop(context);
-                                    _showMessage(
-                                      'Payment settings updated!',
-                                      Colors.green,
-                                    );
-                                  } else {
-                                    _showMessage(
-                                      'Failed to update settings.',
-                                      Colors.red,
-                                    );
-                                  }
-                                },
-                          child: isSaving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                                    } else {
+                                      _showMessage(
+                                        'Failed to update settings.',
+                                        Colors.red,
+                                      );
+                                    }
+                                  },
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Save Settings',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Save Settings',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -950,6 +1096,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 }
+
 /*
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -958,7 +1105,8 @@ import '../services/database_service.dart';
 import '../services/auth_service.dart';
 import 'qr_generator_screen.dart';
 import 'login_screen.dart';
-import 'super_admin.dart'; // NEW: Super Admin File Import
+import 'super_admin.dart';
+import 'super_admin_payment.dart';
 
 class AdminSettingsTab extends StatefulWidget {
   final String restaurantId;
@@ -974,9 +1122,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
   final AuthService _authService = AuthService();
   final User? currentUser = FirebaseAuth.instance.currentUser;
 
-  // ===================== SUPER ADMIN EMAIL =====================
-  final String _superAdminEmail =
-      'super_admin_email@gmail.com'; // Change this to your real email later
+  final String _superAdminEmail = 'super_admin_email@gmail.com';
 
   void _showMessage(String msg, Color color) {
     if (!mounted) return;
@@ -990,7 +1136,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 
-  // Helper method for modern input fields in dialogs
   InputDecoration _buildInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
@@ -1008,7 +1153,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 
-  // ===================== PASSWORD RESET LOGIC =====================
   void _sendPasswordReset(String email) async {
     bool success = await _authService.sendPasswordResetEmail(email);
     if (success) {
@@ -1018,7 +1162,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     }
   }
 
-  // ===================== MANAGE STAFF LOGIC =====================
   void _showManageStaffDialog() {
     showDialog(
       context: context,
@@ -1028,7 +1171,10 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
             borderRadius: BorderRadius.circular(25),
           ),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 500),
+            constraints: const BoxConstraints(
+              maxWidth: 600,
+              maxHeight: 650, // Height increased for better scrolling
+            ),
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1048,15 +1194,16 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Text(
-                      'Manage Staff',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+                    const Expanded(
+                      child: Text(
+                        'Manage Staff',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.grey),
                       onPressed: () => Navigator.pop(context),
@@ -1108,7 +1255,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 8,
+                                vertical: 12,
                               ),
                               leading: CircleAvatar(
                                 backgroundColor: role == 'waiter'
@@ -1129,6 +1276,8 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               subtitle: Padding(
                                 padding: const EdgeInsets.only(top: 4.0),
@@ -1140,13 +1289,80 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                                   ),
                                 ),
                               ),
-                              trailing: IconButton(
-                                tooltip: 'Send Password Reset Link',
-                                icon: const Icon(
-                                  Icons.vpn_key,
-                                  color: Colors.deepPurple,
+                              // FIXED: More professional and understandable Reset button
+                              trailing: OutlinedButton.icon(
+                                icon: const Icon(Icons.lock_reset, size: 18),
+                                label: const Text('Reset'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.deepPurple,
+                                  side: const BorderSide(
+                                    color: Colors.deepPurple,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
-                                onPressed: () => _sendPasswordReset(email),
+                                onPressed: () {
+                                  // Show professional confirmation dialog before sending link
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      title: const Row(
+                                        children: [
+                                          Icon(
+                                            Icons.vpn_key,
+                                            color: Colors.deepPurple,
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            'Reset Password',
+                                            style: TextStyle(
+                                              color: Colors.deepPurple,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      content: Text(
+                                        'An email will be sent to:\n$email\n\nAre you sure you want to send a password reset link?',
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(ctx),
+                                          child: const Text(
+                                            'Cancel',
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.deepPurple,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pop(ctx);
+                                            _sendPasswordReset(email);
+                                          },
+                                          child: const Text(
+                                            'Send Link',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           );
@@ -1163,7 +1379,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 
-  // ===================== ADD STAFF LOGIC =====================
   void _showAddStaffDialog() {
     final TextEditingController emailCtrl = TextEditingController();
     final TextEditingController passCtrl = TextEditingController();
@@ -1181,164 +1396,174 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 450),
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: staffFormKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person_add,
-                              color: Colors.green,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Text(
-                            'Add New Staff',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      DropdownButtonFormField<String>(
-                        value: selectedRole,
-                        decoration: _buildInputDecoration(
-                          'Select Staff Role',
-                          Icons.badge,
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'waiter',
-                            child: Text(
-                              'Waiter',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'kitchen',
-                            child: Text(
-                              'Kitchen (Chef)',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                        onChanged: (val) =>
-                            setDialogState(() => selectedRole = val!),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: emailCtrl,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: _buildInputDecoration(
-                          'Staff Email',
-                          Icons.email,
-                        ),
-                        validator: (v) => v!.isEmpty ? 'Enter email' : null,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: passCtrl,
-                        obscureText: true,
-                        decoration: _buildInputDecoration(
-                          'Password',
-                          Icons.lock,
-                        ),
-                        validator: (v) => (v == null || v.length < 6)
-                            ? 'Min 6 characters required'
-                            : null,
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: isAdding
-                                ? null
-                                : () => Navigator.pop(context),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+              // FIXED: Added SingleChildScrollView to prevent keyboard overflow
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: staffFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person_add,
+                                color: Colors.green,
+                                size: 28,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Text(
+                                'Add New Staff',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
                               ),
                             ),
-                            onPressed: isAdding
-                                ? null
-                                : () async {
-                                    if (!staffFormKey.currentState!.validate())
-                                      return;
-                                    setDialogState(() => isAdding = true);
-                                    bool success = await _authService
-                                        .createStaffAccount(
-                                          email: emailCtrl.text.trim(),
-                                          password: passCtrl.text.trim(),
-                                          restaurantId: widget.restaurantId,
-                                          role: selectedRole,
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        DropdownButtonFormField<String>(
+                          value: selectedRole,
+                          decoration: _buildInputDecoration(
+                            'Select Staff Role',
+                            Icons.badge,
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'waiter',
+                              child: Text(
+                                'Waiter',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'kitchen',
+                              child: Text(
+                                'Kitchen (Chef)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) =>
+                              setDialogState(() => selectedRole = val!),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _buildInputDecoration(
+                            'Staff Email',
+                            Icons.email,
+                          ),
+                          validator: (v) => v!.isEmpty ? 'Enter email' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: passCtrl,
+                          obscureText: true,
+                          decoration: _buildInputDecoration(
+                            'Password',
+                            Icons.lock,
+                          ),
+                          validator: (v) => (v == null || v.length < 6)
+                              ? 'Min 6 characters required'
+                              : null,
+                        ),
+                        const SizedBox(height: 32),
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 16,
+                          runSpacing: 10,
+                          children: [
+                            TextButton(
+                              onPressed: isAdding
+                                  ? null
+                                  : () => Navigator.pop(context),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: isAdding
+                                  ? null
+                                  : () async {
+                                      if (!staffFormKey.currentState!
+                                          .validate()) {
+                                        return;
+                                      }
+                                      setDialogState(() => isAdding = true);
+                                      bool success = await _authService
+                                          .createStaffAccount(
+                                            email: emailCtrl.text.trim(),
+                                            password: passCtrl.text.trim(),
+                                            restaurantId: widget.restaurantId,
+                                            role: selectedRole,
+                                          );
+                                      setDialogState(() => isAdding = false);
+                                      if (success) {
+                                        Navigator.pop(context);
+                                        _showMessage(
+                                          '${selectedRole.toUpperCase()} account created successfully!',
+                                          Colors.green,
                                         );
-                                    setDialogState(() => isAdding = false);
-                                    if (success) {
-                                      Navigator.pop(context);
-                                      _showMessage(
-                                        '${selectedRole.toUpperCase()} account created successfully!',
-                                        Colors.green,
-                                      );
-                                    } else {
-                                      _showMessage(
-                                        'Failed to add staff. Email might be in use.',
-                                        Colors.red,
-                                      );
-                                    }
-                                  },
-                            child: isAdding
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
+                                      } else {
+                                        _showMessage(
+                                          'Failed to add staff. Email might be in use.',
+                                          Colors.red,
+                                        );
+                                      }
+                                    },
+                              child: isAdding
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Create Account',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  )
-                                : const Text(
-                                    'Create Account',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1349,7 +1574,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 
-  // ===================== PAYMENT SETTINGS LOGIC =====================
   void _showPaymentSettingsDialog() async {
     showDialog(
       context: context,
@@ -1382,138 +1606,146 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 450),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.pink.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.payments,
-                            color: Colors.pink,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Text(
-                          'Payment Settings',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.pink,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Set your bKash and Nagad numbers for receiving digital payments from customers.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: bkashCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: _buildInputDecoration(
-                        'bKash Personal Number',
-                        Icons.account_balance_wallet,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nagadCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: _buildInputDecoration(
-                        'Nagad Personal Number',
-                        Icons.account_balance_wallet_outlined,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: isSaving
-                              ? null
-                              : () => Navigator.pop(context),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+              // FIXED: Added SingleChildScrollView to prevent keyboard overflow
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 450),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.pink.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.payments,
+                              color: Colors.pink,
+                              size: 28,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pink,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Text(
+                              'Payment Settings',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.pink,
+                              ),
                             ),
                           ),
-                          onPressed: isSaving
-                              ? null
-                              : () async {
-                                  setDialogState(() => isSaving = true);
-                                  bool success = await _dbService
-                                      .savePaymentSettings(
-                                        widget.restaurantId,
-                                        bkashCtrl.text.trim(),
-                                        nagadCtrl.text.trim(),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Set your bKash and Nagad numbers for receiving digital payments from customers.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: bkashCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: _buildInputDecoration(
+                          'bKash Personal Number',
+                          Icons.account_balance_wallet,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: nagadCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: _buildInputDecoration(
+                          'Nagad Personal Number',
+                          Icons.account_balance_wallet_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 16,
+                        runSpacing: 10,
+                        children: [
+                          TextButton(
+                            onPressed: isSaving
+                                ? null
+                                : () => Navigator.pop(context),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.pink,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    setDialogState(() => isSaving = true);
+                                    bool success = await _dbService
+                                        .savePaymentSettings(
+                                          widget.restaurantId,
+                                          bkashCtrl.text.trim(),
+                                          nagadCtrl.text.trim(),
+                                        );
+                                    setDialogState(() => isSaving = false);
+                                    if (success) {
+                                      Navigator.pop(context);
+                                      _showMessage(
+                                        'Payment settings updated!',
+                                        Colors.green,
                                       );
-                                  setDialogState(() => isSaving = false);
-                                  if (success) {
-                                    Navigator.pop(context);
-                                    _showMessage(
-                                      'Payment settings updated!',
-                                      Colors.green,
-                                    );
-                                  } else {
-                                    _showMessage(
-                                      'Failed to update settings.',
-                                      Colors.red,
-                                    );
-                                  }
-                                },
-                          child: isSaving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                                    } else {
+                                      _showMessage(
+                                        'Failed to update settings.',
+                                        Colors.red,
+                                      );
+                                    }
+                                  },
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Save Settings',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Save Settings',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1576,7 +1808,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
     );
   }
 
-  // Custom List Tile for uniform modern look
   Widget _buildModernListTile({
     required IconData icon,
     required Color color,
@@ -1643,9 +1874,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 750,
-        ), // Responsive constraint
+        constraints: const BoxConstraints(maxWidth: 750),
         child: ListView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
@@ -1702,7 +1931,6 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===================== RESTAURANT ID BADGE =====================
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -1831,6 +2059,22 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
               title: 'Payment Settings',
               subtitle: 'Set bKash & Nagad numbers for digital payments',
               onTap: _showPaymentSettingsDialog,
+            ),
+
+            // ===================== NEW: DEVELOPER PAYMENT =====================
+            _buildModernListTile(
+              icon: Icons.developer_board,
+              color: Colors.blueAccent,
+              title: 'Developer Payment',
+              subtitle: 'Clear monthly software subscription bills',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SuperAdminPaymentScreen(
+                    restaurantId: widget.restaurantId,
+                  ),
+                ),
+              ),
             ),
 
             // ===================== SUPER ADMIN CONTROL (HIDDEN MAGIC) =====================
